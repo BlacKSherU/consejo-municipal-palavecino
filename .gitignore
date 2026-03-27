@@ -1,0 +1,70 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# Django
+*.log
+local_settings.py
+*.sqlite3
+db.sqlite3-journal
+/media
+/staticfiles
+
+# Environment variables (nunca subir secretos)
+.env
+.env.*
+!.env.example
+
+# Traducciones compiladas (opcional: algunos equipos versionan .mo; aquí se ignoran generados locales)
+# Descomenta si no quieres versionar binarios:
+# locale/**/LC_MESSAGES/django.mo
+
+# Testing / cobertura
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Herramientas Python
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+
+# IDEs y editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Empaquetado / build
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Jupyter (si se usa en el proyecto)
+.ipynb_checkpoints/
+
+# Node (si añades frontend con npm)
+node_modules/

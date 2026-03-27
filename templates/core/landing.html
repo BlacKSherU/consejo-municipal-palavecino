@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block title %}{% trans "Home" %} — {% trans "Bolivarian Municipal Council of Palavecino" %}{% endblock %}
+
+{% block content %}
+  <section
+    id="top"
+    class="relative overflow-hidden bg-hero-light dark:bg-hero-dark"
+    aria-labelledby="hero-heading"
+  >
+    <div
+      class="pointer-events-none absolute -left-32 top-20 h-72 w-72 rounded-full bg-brand/20 blur-3xl dark:bg-brand/30"
+      aria-hidden="true"
+    ></div>
+    <div
+      class="pointer-events-none absolute -right-24 bottom-10 h-80 w-80 rounded-full bg-brand-teal/20 blur-3xl dark:bg-brand-teal/25"
+      aria-hidden="true"
+    ></div>
+
+    <div class="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:flex lg:items-center lg:gap-12 lg:py-28 lg:px-8">
+      <div class="max-w-2xl flex-1">
+        <p
+          class="mb-4 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand shadow-sm dark:border-brand-muted/30 dark:bg-slate-900/60 dark:text-brand-muted"
+          data-reveal
+        >
+          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-teal"></span>
+          {% trans "Institutional portal" %}
+        </p>
+        <h1
+          id="hero-heading"
+          class="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl dark:text-white"
+          data-reveal
+        >
+          <span class="bg-brand-gradient bg-clip-text text-transparent">
+            {% trans "Bolivarian Municipal Council" %}
+          </span>
+          <span class="mt-2 block text-slate-800 dark:text-slate-100">
+            {% trans "of Palavecino" %}
+          </span>
+        </h1>
+        <p
+          class="mt-6 text-lg leading-relaxed text-slate-600 dark:text-slate-300"
+          data-reveal
+        >
+          {% trans "Serving our citizens with transparency, participation, and commitment to local development. Discover our work and connect with the council." %}
+        </p>
+        <div class="mt-10 flex flex-wrap gap-4" data-reveal>
+          <a
+            href="#pillars"
+            class="inline-flex items-center justify-center rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand dark:shadow-brand/20"
+          >
+            {% trans "Explore our pillars" %}
+          </a>
+          <a
+            href="#contact"
+            class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white/80 px-6 py-3 text-sm font-semibold text-slate-800 backdrop-blur transition hover:border-brand/40 hover:bg-white dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:border-brand-muted/50"
+          >
+            {% trans "Contact" %}
+          </a>
+        </div>
+      </div>
+      <div
+        class="relative mt-14 flex flex-1 justify-center lg:mt-0"
+        data-reveal
+      >
+        <div
+          class="relative aspect-square w-full max-w-md animate-float rounded-3xl border border-white/50 bg-white/40 p-8 shadow-2xl shadow-brand/10 backdrop-blur-md dark:border-slate-700/50 dark:bg-slate-900/40 dark:shadow-brand/5"
+        >
+          <img
+            src="{% static 'img/logo.svg' %}"
+            alt=""
+            class="mx-auto h-48 w-48 opacity-90 dark:opacity-100"
+            role="presentation"
+          />
+          <p class="mt-6 text-center text-sm font-medium text-slate-600 dark:text-slate-300">
+            {% trans "Together we build the future of our municipality." %}
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section
+    id="mission"
+    class="border-y border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-900"
+    aria-labelledby="mission-heading"
+  >
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-3xl text-center" data-reveal>
+        <h2
+          id="mission-heading"
+          class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white"
+        >
+          {% trans "Our mission" %}
+        </h2>
+        <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">
+          {% trans "To exercise legislative and oversight functions with integrity, openness, and closeness to the people, strengthening participatory democracy at the local level." %}
+        </p>
+      </div>
+      <div
+        class="mt-12 grid gap-6 sm:grid-cols-3"
+        data-reveal
+      >
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-950/50">
+          <p class="text-3xl font-bold text-brand dark:text-brand-muted">100%</p>
+          <p class="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">
+            {% trans "Commitment to transparency" %}
+          </p>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-950/50">
+          <p class="text-3xl font-bold text-brand-teal dark:text-brand-teal-light">24/7</p>
+          <p class="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">
+            {% trans "Digital access to information" %}
+          </p>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-700 dark:bg-slate-950/50">
+          <p class="text-3xl font-bold text-brand-sky dark:text-brand-sky-light">+1</p>
+          <p class="mt-2 text-sm font-medium text-slate-600 dark:text-slate-400">
+            {% trans "Community that drives us" %}
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section
+    id="pillars"
+    class="py-20 dark:bg-slate-950"
+    aria-labelledby="pillars-heading"
+  >
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div class="mb-14 max-w-2xl" data-reveal>
+        <h2
+          id="pillars-heading"
+          class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white"
+        >
+          {% trans "Strategic pillars" %}
+        </h2>
+        <p class="mt-3 text-slate-600 dark:text-slate-400">
+          {% trans "Three principles that guide every decision and every public action." %}
+        </p>
+      </div>
+      <div class="grid gap-8 md:grid-cols-3">
+        <article
+          class="group rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-brand/30 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900"
+          data-reveal
+        >
+          <div
+            class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand to-brand-teal text-white shadow-md"
+          >
+            {% include "includes/icons/heroicon_eye_24_outline.html" %}
+          </div>
+          <h3 class="text-xl font-semibold text-slate-900 dark:text-white">
+            {% trans "Transparency" %}
+          </h3>
+          <p class="mt-3 text-slate-600 dark:text-slate-400">
+            {% trans "Clear access to agendas, minutes, and decisions so every neighbor can follow the work of the council." %}
+          </p>
+        </article>
+        <article
+          class="group rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-brand-teal/40 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900"
+          data-reveal
+        >
+          <div
+            class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-teal to-brand-sky text-white shadow-md"
+          >
+            {% include "includes/icons/heroicon_user_group_24_outline.html" %}
+          </div>
+          <h3 class="text-xl font-semibold text-slate-900 dark:text-white">
+            {% trans "Participation" %}
+          </h3>
+          <p class="mt-3 text-slate-600 dark:text-slate-400">
+            {% trans "Spaces for dialogue with communities, social organizations, and citizens who wish to contribute ideas and oversight." %}
+          </p>
+        </article>
+        <article
+          class="group rounded-2xl border border-slate-200 bg-white p-8 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-brand-sky/40 hover:shadow-xl dark:border-slate-800 dark:bg-slate-900"
+          data-reveal
+        >
+          <div
+            class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-sky to-brand text-white shadow-md"
+          >
+            {% include "includes/icons/heroicon_building_office_2_24_outline.html" %}
+          </div>
+          <h3 class="text-xl font-semibold text-slate-900 dark:text-white">
+            {% trans "Local development" %}
+          </h3>
+          <p class="mt-3 text-slate-600 dark:text-slate-400">
+            {% trans "Supporting public policies that improve quality of life, infrastructure, and services in our municipality." %}
+          </p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section
+    id="contact"
+    class="relative overflow-hidden bg-brand-gradient py-20 text-white"
+    aria-labelledby="contact-heading"
+  >
+    <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.06\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40" aria-hidden="true"></div>
+    <div class="relative mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8" data-reveal>
+      <h2 id="contact-heading" class="text-3xl font-bold tracking-tight">
+        {% trans "We are here to serve you" %}
+      </h2>
+      <p class="mt-4 text-lg text-white/90">
+        {% trans "Follow our channels for schedules, public hearings, and institutional updates." %}
+      </p>
+      <a
+        href="#top"
+        class="mt-10 inline-flex items-center justify-center rounded-xl bg-white px-8 py-3 text-sm font-semibold text-brand shadow-lg transition hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      >
+        {% trans "Back to top" %}
+      </a>
+    </div>
+  </section>
+
+  <footer
+    class="border-t border-slate-200 bg-slate-100 py-10 dark:border-slate-800 dark:bg-slate-900"
+    role="contentinfo"
+  >
+    <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-6 lg:px-8">
+      <div class="flex items-center gap-3">
+        <img src="{% static 'img/logo.svg' %}" width="40" height="40" class="h-10 w-10" alt="" />
+        <div class="text-sm text-slate-600 dark:text-slate-400">
+          <p class="font-semibold text-slate-800 dark:text-slate-200">
+            {% trans "Bolivarian Municipal Council of Palavecino" %}
+          </p>
+          <p class="mt-1">{% trans "All rights reserved." %}</p>
+        </div>
+      </div>
+      <p class="text-center text-xs text-slate-500 dark:text-slate-500">
+        {% now "Y" %} &mdash; {% trans "Official institutional website." %}
+      </p>
+    </div>
+  </footer>
+{% endblock %}
+
+{% block extra_js %}
+  <script src="{% static 'js/landing.js' %}" defer></script>
+{% endblock %}

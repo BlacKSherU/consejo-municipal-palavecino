@@ -1,0 +1,126 @@
+# English translations for Consejo Municipal Palavecino.
+msgid ""
+msgstr ""
+"Project-Id-Version: Consejo Municipal Palavecino\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "All rights reserved."
+msgstr "All rights reserved."
+
+msgid "Back to top"
+msgstr "Back to top"
+
+msgid "Bolivarian Municipal Council"
+msgstr "Bolivarian Municipal Council"
+
+msgid "Bolivarian Municipal Council of Palavecino"
+msgstr "Bolivarian Municipal Council of Palavecino"
+
+msgid "Bolivarian Municipal Council of Palavecino emblem"
+msgstr "Bolivarian Municipal Council of Palavecino emblem"
+
+msgid "Clear access to agendas, minutes, and decisions so every neighbor can follow the work of the council."
+msgstr "Clear access to agendas, minutes, and decisions so every neighbor can follow the work of the council."
+
+msgid "Commitment to transparency"
+msgstr "Commitment to transparency"
+
+msgid "Community that drives us"
+msgstr "Community that drives us"
+
+msgid "Contact"
+msgstr "Contact"
+
+msgid "Digital access to information"
+msgstr "Digital access to information"
+
+msgid "Explore our pillars"
+msgstr "Explore our pillars"
+
+msgid "Follow our channels for schedules, public hearings, and institutional updates."
+msgstr "Follow our channels for schedules, public hearings, and institutional updates."
+
+msgid "Home"
+msgstr "Home"
+
+msgid "Institutional portal"
+msgstr "Institutional portal"
+
+msgid "Local development"
+msgstr "Local development"
+
+msgid "Main"
+msgstr "Main"
+
+msgid "Mission"
+msgstr "Mission"
+
+msgid "Municipal Council"
+msgstr "Municipal Council"
+
+msgid "Official institutional website."
+msgstr "Official institutional website."
+
+msgid "Official portal of the Bolivarian Municipal Council of Palavecino — transparency, participation, and service to the community."
+msgstr "Official portal of the Bolivarian Municipal Council of Palavecino — transparency, participation, and service to the community."
+
+msgid "of Palavecino"
+msgstr "of Palavecino"
+
+msgid "Our mission"
+msgstr "Our mission"
+
+msgid "Palavecino"
+msgstr "Palavecino"
+
+msgid "Participation"
+msgstr "Participation"
+
+msgid "Pillars"
+msgstr "Pillars"
+
+msgid "Serving our citizens with transparency, participation, and commitment to local development. Discover our work and connect with the council."
+msgstr "Serving our citizens with transparency, participation, and commitment to local development. Discover our work and connect with the council."
+
+msgid "Skip to main content"
+msgstr "Skip to main content"
+
+msgid "Spaces for dialogue with communities, social organizations, and citizens who wish to contribute ideas and oversight."
+msgstr "Spaces for dialogue with communities, social organizations, and citizens who wish to contribute ideas and oversight."
+
+msgid "Strategic pillars"
+msgstr "Strategic pillars"
+
+msgid "Supporting public policies that improve quality of life, infrastructure, and services in our municipality."
+msgstr "Supporting public policies that improve quality of life, infrastructure, and services in our municipality."
+
+msgid "Switch language to English"
+msgstr "Switch language to English"
+
+msgid "Switch language to Spanish"
+msgstr "Switch language to Spanish"
+
+msgid "Switch to dark theme"
+msgstr "Switch to dark theme"
+
+msgid "Switch to light theme"
+msgstr "Switch to light theme"
+
+msgid "Three principles that guide every decision and every public action."
+msgstr "Three principles that guide every decision and every public action."
+
+msgid "Together we build the future of our municipality."
+msgstr "Together we build the future of our municipality."
+
+msgid "To exercise legislative and oversight functions with integrity, openness, and closeness to the people, strengthening participatory democracy at the local level."
+msgstr "To exercise legislative and oversight functions with integrity, openness, and closeness to the people, strengthening participatory democracy at the local level."
+
+msgid "Transparency"
+msgstr "Transparency"
+
+msgid "We are here to serve you"
+msgstr "We are here to serve you"
