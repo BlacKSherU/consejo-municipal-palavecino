@@ -14,12 +14,25 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import RedirectView
 from django.views.i18n import set_language
+
+_static_prefix = settings.STATIC_URL
+if not str(_static_prefix).startswith("/"):
+    _static_prefix = "/" + str(_static_prefix)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("i18n/setlang/", set_language, name="set_language"),
+    path(
+        "favicon.ico",
+        RedirectView.as_view(
+            url=_static_prefix + "img/logo.svg",
+            permanent=False,
+        ),
+    ),
     path("", include("core.urls")),
 ]
