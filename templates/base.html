@@ -151,6 +151,10 @@
       {% block content %}{% endblock %}
     </main>
 
+    <script>
+      window.__CMP_BROWSER_LOG__ = {{ browser_console_log_enabled|yesno:"true,false" }};
+    </script>
+    <script src="{% static 'js/debug.js' %}" defer></script>
     <script src="{% static 'js/theme.js' %}" defer></script>
     {% block extra_js %}{% endblock %}
   </body>

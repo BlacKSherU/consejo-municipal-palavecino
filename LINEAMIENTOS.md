@@ -18,7 +18,7 @@ Este documento define convenciones y buenas prácticas que el equipo debe seguir
 - **Código fuente y comentarios en inglés** ([§11](#11-estilo-de-código-e-idioma-del-código-fuente)); la **interfaz de usuario** usa **español por defecto** y admite **inglés y español** como idiomas principales del sitio ([§4](#4-internacionalización-i18n-y-localización-l10n)).
 - **Interfaz responsive en todo el proyecto** ([§5](#5-framework-css-oficial-tailwind-css)): diseño adaptable a móviles, tablets y escritorio, sin depender de un ancho fijo.
 - **Iconografía** con conjuntos oficiales ([§5](#5-framework-css-oficial-tailwind-css)): Heroicons (preferido) o Bootstrap Icons (alternativa), sin SVG inventados a mano.
-- **Compatibilidad de runtime:** **Python 3.8+** (incl. 3.8.10 en producción) y **Django 4.2 LTS** salvo acuerdo de subida de versión ([§14](#14-dependencias-y-entorno-python)).
+- **Compatibilidad de runtime:** **Python 3.12.3+** (referencia alineada con producción) y **Django 6.0.x** según `requirements.txt` ([§14](#14-dependencias-y-entorno-python)).
 
 ---
 
@@ -189,17 +189,46 @@ Este documento define convenciones y buenas prácticas que el equipo debe seguir
 - **`requirements.txt`** (o lockfile equivalente) versionado en el repo; instalar con `pip install -r requirements.txt` dentro de un **entorno virtual** (`venv`), no mezclar paquetes con el Python del sistema.
 - Añadir dependencias de forma explícita; **no** commitear el directorio `venv/`.
 - Antes de subir cambios que afecten dependencias, actualizar el archivo de requisitos y mencionarlo en el PR.
-- **Versión de Python (obligatorio):** el proyecto debe ser **compatible con Python 3.8** como mínimo (incluye despliegues con **3.8.10**). No introducir sintaxis ni dependencias que exijan 3.9+ sin decisión explícita y actualización del `README` y de este documento.
-- **Django:** usar la rama **4.2 LTS** acordada en `requirements.txt` mientras el soporte a 3.8 esté vigente. Subidas de versión mayor de Django/Python requieren revisión de compatibilidad y despliegue.
+- **Versión de Python (obligatorio):** **Python 3.12** como mínimo; se usa **3.12.3** como referencia (véase `.python-version` y `README`). Cualquier cambio de rama mayor de Python debe reflejarse en `README`, `requirements.txt` y este documento.
+- **Django:** la versión mayor está fijada en `requirements.txt` (**6.0.x** en la línea actual). Las subidas de versión mayor de Django/Python requieren revisión de notas de publicación, migraciones y despliegue.
 - La versión de **Python** concreta del entorno de producción debe figurar en el `README` y mantenerse alineada con CI y servidores.
 
 ---
 
 ## 15. Registro (logging), errores HTTP y mensajes al usuario
 
-- Usar el **sistema de logging** de Django/Python (`logging`) con niveles adecuados (`DEBUG` en desarrollo, no depender de `print` en código permanente).
+- Usar el **sistema de logging** de Django/Python (`logging`) con niveles adecuados; **no** depender de `print` en código permanente. Obtener loggers con `logging.getLogger(__name__)`.
 - En **producción**: no exponer trazas ni detalles internos al usuario; páginas de error **500** genéricas y amigables; **404** personalizada cuando el sitio lo requiera.
 - Mensajes de error o éxito visibles en la interfaz deben ser **traducibles** y coherentes con [§4](#4-internacionalización-i18n-y-localización-l10n); evitar filtrar detalles sensibles en `messages` o en JSON de API.
+
+### 15.1 Logging del servidor y consola del navegador (interruptores por entorno)
+
+Es habitual acumular **decenas o cientos** de trazas útiles en un momento del proyecto y luego convertirse en ruido. En este proyecto la verbosidad se controla **por categoría** desde variables de entorno (véase `.env.example` y `settings.LOGGING`):
+
+- **`DJANGO_LOG_ROOT_LEVEL`** — nivel del logger raíz (`DEBUG`, `INFO`, `WARNING`, …). Si no se define, con `DJANGO_DEBUG=True` se usa `DEBUG`, si no `INFO`.
+- **`DJANGO_LOG_DJANGO_LEVEL`** — paquete `django` (mensajes generales del framework).
+- **`DJANGO_LOG_SQL`** — consultas SQL (`django.db.backends`); activar solo al depurar rendimiento o queries.
+- **`DJANGO_LOG_REQUEST`** — peticiones / errores 4xx/5xx detallados (`django.request`).
+- **`DJANGO_LOG_SERVER`** — líneas tipo *runserver* (`django.server`); por defecto **sigue a `DJANGO_DEBUG`** (ruidoso en local, apagado en producción si `DEBUG` es falso).
+- **`DJANGO_LOG_SECURITY`** — eventos de seguridad (`django.security`).
+- **`DJANGO_LOG_CORE`** — logger `core` y submódulos (`core.views`, etc.) en `DEBUG` cuando está activo.
+
+**Consola del navegador:** no usar `console.log` / `console.debug` sueltos en JS versionado. Usar **`cmpDebug.log`**, **`cmpDebug.info`**, **`cmpDebug.warn`** definidos en `static/js/debug.js`, que solo emiten si **`DJANGO_BROWSER_CONSOLE_LOG=True`**. Así el mismo código puede silenciarse en producción sin tocar el bundle.
+
+Al añadir **nuevas apps**, registrar su logger en `settings.LOGGING` (o un módulo de configuración importado desde `settings`) con una variable **`DJANGO_LOG_<APP>`** análoga, y documentarla en `.env.example`.
+
+### 15.2 Nombres de logger y prefijo de dominio (filtrado en producción)
+
+Cada traza debe poder **aislarse por módulo o área funcional** en `journalctl`, grep, Loki u otras herramientas, sin mezclar todo en un bloque indistinguible.
+
+- **Nombre del logger (obligatorio):** usar **`logging.getLogger(__name__)`** dentro de cada módulo Python, de modo que el nombre refleje el paquete (p. ej. `ventas.views`, `ventas.services`, `core.models`). Ese string es el **prefijo lógico** y en este proyecto aparece en la línea de log gracias al formatter (`{name}` en `settings.LOGGING`).
+- **Dominio estable:** si conviene un único logger para toda un área (p. ej. todo el módulo de ventas), puede usarse un nombre explícito y corto: `logging.getLogger("ventas")` o jerárquico `logging.getLogger("ventas.checkout")`. Evitar loggers anónimos o nombres genéricos (`"app"`, `"utils"`) que impidan filtrar.
+- **Convención de prefijo textual (opcional):** cuando el mensaje se copia a sistemas que no muestran el nombre del logger, se puede anteponer un **tag fijo y buscable** al texto, en mayúsculas y con corchetes, alineado con el dominio: p. ej. `[VENTAS]`, `[SESIONES]`, `[AUTH]`. No duplicar tag y nombre de logger sin necesidad; priorizar siempre el nombre del logger bien elegido.
+- **JavaScript:** si se añaden trazas con `cmpDebug.*`, usar el mismo criterio: un prefijo literal en el mensaje (`[VENTAS] …`) para poder filtrar en la consola del navegador.
+
+### 15.3 Opinión / criterio de equipo
+
+Centralizar interruptores en **entorno** (`.env` / systemd) evita ramas `if DEBUG` dispersas y permite que operaciones active SQL o peticiones solo durante un incidente. Complementa, no sustituye, un nivel razonable por defecto en producción (`INFO`/`WARNING`) y logs estructurados si más adelante se integra agregación (ELK, Loki, etc.).
 
 ---
 
@@ -246,18 +275,19 @@ Antes de considerar una tarea lista para integrar (salvo excepciones acordadas),
 - **Interfaz responsive** revisada en anchos representativos (móvil / tablet / escritorio) según [§5](#5-framework-css-oficial-tailwind-css).
 - **Tests** añadidos o actualizados para la lógica nueva o corregida.
 - Sin dependencias nuevas sin actualizar `requirements.txt` (si aplica).
+- **Logging:** nuevos loggers o trazas JS documentados en `.env.example` si añaden variables; en frontend, usar `cmpDebug.*` salvo excepción justificada ([§15.1](#151-logging-del-servidor-y-consola-del-navegador-interruptores-por-entorno)); nombres de logger / prefijos de dominio acordes a [§15.2](#152-nombres-de-logger-y-prefijo-de-dominio-filtrado-en-producción).
 
 ---
 
 ## Referencias útiles
 
-- [Django 4.2: Documentación](https://docs.djangoproject.com/en/4.2/) (versión alineada con el `requirements.txt`)
-- [Django: Design philosophies](https://docs.djangoproject.com/en/4.2/misc/design-philosophies/)
-- [Django: Translation](https://docs.djangoproject.com/en/4.2/topics/i18n/translation/)
-- [Django: Static files](https://docs.djangoproject.com/en/4.2/howto/static-files/)
-- [Django: Deployment checklist](https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/)
-- [Django: Logging](https://docs.djangoproject.com/en/4.2/topics/logging/)
-- [Django: Database optimization](https://docs.djangoproject.com/en/4.2/topics/db/optimization/)
+- [Django 6.0: Documentación](https://docs.djangoproject.com/en/6.0/) (versión alineada con el `requirements.txt`)
+- [Django: Design philosophies](https://docs.djangoproject.com/en/6.0/misc/design-philosophies/)
+- [Django: Translation](https://docs.djangoproject.com/en/6.0/topics/i18n/translation/)
+- [Django: Static files](https://docs.djangoproject.com/en/6.0/howto/static-files/)
+- [Django: Deployment checklist](https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/)
+- [Django: Logging](https://docs.djangoproject.com/en/6.0/topics/logging/)
+- [Django: Database optimization](https://docs.djangoproject.com/en/6.0/topics/db/optimization/)
 - [Tailwind CSS: Documentación](https://tailwindcss.com/docs)
 - [Tailwind CSS: Responsive design](https://tailwindcss.com/docs/responsive-design)
 - [Heroicons](https://heroicons.com) (iconos oficiales del ecosistema Tailwind)

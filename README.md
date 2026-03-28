@@ -6,8 +6,8 @@ Aplicación web del **Consejo Municipal de Palavecino** (Venezuela), desarrollad
 
 | Área | Elección |
 |------|----------|
-| Backend | **Django 4.2 LTS** |
-| Python | **3.8+** (incluye **3.8.10** en servidor; alinear dev/CI/producción) |
+| Backend | **Django 6.0** |
+| Python | **3.12.3+** (referencia: **3.12.3**; alinear dev/CI/producción) |
 | Interfaz | Español por defecto; **es** y **en** como idiomas del sitio |
 | CSS | **Tailwind CSS** (único framework CSS; ver lineamientos) |
 | Iconos | **Heroicons** (npm `heroicons`, alineado con Tailwind); alternativa: Bootstrap Icons |
@@ -17,17 +17,17 @@ Aplicación web del **Consejo Municipal de Palavecino** (Venezuela), desarrollad
 
 ### Python
 
-Versión mínima soportada: **Python 3.8**. El proyecto se despliega y prueba con **3.8.10** en servidor; en desarrollo puedes usar 3.10–3.13 si lo prefieres, pero **evita** sintaxis exclusiva de Python 3.10+ (`str | None`, `match/case`, etc.) salvo compatibilidad verificada.
+Versión mínima soportada: **Python 3.12** (Django 6.0 no admite 3.10 ni 3.11). Se recomienda **Python 3.12.3** como versión de referencia en todos los entornos. Con [pyenv](https://github.com/pyenv/pyenv) o similar, el archivo [`.python-version`](.python-version) fija `3.12.3`.
 
 Comprueba:
 
 ```bash
-python3 --version   # debe ser >= 3.8
+python3 --version   # debe ser >= 3.12 (idealmente 3.12.3)
 ```
 
 ### Otros
 
-- Entorno virtual: `python3 -m venv venv` (o `python3.8 -m venv venv`)
+- Entorno virtual: `python3.12 -m venv venv` (o `python3 -m venv venv` si `python3` es 3.12+)
 - Dependencias: `pip install -r requirements.txt` (recomendado: `pip install --upgrade pip` antes)
 - **Node.js** (solo para compilar CSS de Tailwind en desarrollo o en el pipeline de despliegue)
 
@@ -52,7 +52,7 @@ npm install
 npm run build
 ```
 
-Si venías de una copia del repo con **Django 6** y fallan migraciones o la base local, en desarrollo puedes borrar `db.sqlite3` y volver a ejecutar `python manage.py migrate`.
+Tras actualizar Django de una versión mayor anterior, si fallan migraciones o la base local de desarrollo, puedes borrar `db.sqlite3` y volver a ejecutar `python manage.py migrate`.
 
 Esto genera [`static/css/app.css`](static/css/app.css). Si cambias plantillas o clases Tailwind, vuelve a ejecutar `npm run build` (o `npm run watch:css` mientras desarrollas).
 
@@ -116,6 +116,10 @@ Con **`DEBUG=False`** Django **no** sirve `static/` solo. Este proyecto usa **Wh
 3. Reinicia Gunicorn (o el servicio que uses).
 
 En local, con `DEBUG=True`, no hace falta `collectstatic` para ver los estilos (WhiteNoise usa los finders de desarrollo).
+
+### Logging (servidor y consola del navegador)
+
+Las variables `DJANGO_LOG_*` y `DJANGO_BROWSER_CONSOLE_LOG` en `.env` activan o silencian categorías concretas (SQL, peticiones, app `core`, etc.). Detalle y convenciones en [LINEAMIENTOS.md §15.1](LINEAMIENTOS.md#151-logging-del-servidor-y-consola-del-navegador-interruptores-por-entorno).
 
 ## Licencia
 

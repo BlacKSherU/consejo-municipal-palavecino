@@ -1,13 +1,14 @@
 """
 Django settings for ConsejoMunicipalPalavecino project.
 
-Compatible with Python 3.8+ and Django 4.2 LTS.
+Compatible with Python 3.12.3+ and Django 6.0.x (Django 6.0 requiere Python 3.12+).
 
 Docs:
-https://docs.djangoproject.com/en/4.2/topics/settings/
-https://docs.djangoproject.com/en/4.2/ref/settings/
+https://docs.djangoproject.com/en/6.0/topics/settings/
+https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
+import logging
 import os
 from pathlib import Path
 
@@ -16,26 +17,47 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Carga .env en el proceso (Django no lo hace solo). Las variables siguen siendo os.environ.
-load_dotenv(BASE_DIR / ".env")
+# override=True: el .env sustituye variables ya definidas (systemd, Environment=, shell).
+# Sin eso, un DJANGO_DEBUG=False en el servicio ignora lo que pongas en .env.
+load_dotenv(BASE_DIR / ".env", override=True)
+
+
+def _strip_optional_quotes(value: str) -> str:
+    s = value.strip()
+    if len(s) >= 2 and s[0] == s[-1] and s[0] in "\"'":
+        return s[1:-1].strip()
+    return s
+
+
+def _env_str(key: str, default: str = "") -> str:
+    raw = os.environ.get(key, default)
+    if raw is None:
+        return default
+    return _strip_optional_quotes(str(raw))
+
+
+def _env_bool(key: str, *, default: bool) -> bool:
+    raw = os.environ.get(key)
+    if raw is None or not str(raw).strip():
+        return default
+    s = _strip_optional_quotes(str(raw)).lower()
+    return s in ("1", "true", "yes", "on")
 
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get(
-    "DJANGO_SECRET_KEY",
-    "django-insecure-k@pj!4#dw_$2v^2ir$i_c*#q-2gw$beo7*2f$9#$q*dbfm(b@c",
+_default_secret = (
+    "django-insecure-k@pj!4#dw_$2v^2ir$i_c*#q-2gw$beo7*2f$9#$q*dbfm(b@c"
 )
+SECRET_KEY = _env_str("DJANGO_SECRET_KEY") or _default_secret
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = (
-    os.environ.get("DJANGO_DEBUG", "True").strip().lower() in ("1", "true", "yes")
-)
+DEBUG = _env_bool("DJANGO_DEBUG", default=True)
 
-_allowed_hosts_raw = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
-if _allowed_hosts_raw.strip():
+_allowed_hosts_raw = _env_str("DJANGO_ALLOWED_HOSTS")
+if _allowed_hosts_raw:
     ALLOWED_HOSTS = [
         h.strip() for h in _allowed_hosts_raw.split(",") if h.strip()
     ]
@@ -49,11 +71,91 @@ if DEBUG:
     ALLOWED_HOSTS = ["*"]
 
 # Tras nginx/apache como proxy: que Host se tome de X-Forwarded-Host (solo si confías en el proxy).
-USE_X_FORWARDED_HOST = os.environ.get(
-    "DJANGO_USE_X_FORWARDED_HOST", ""
-).strip().lower() in ("1", "true", "yes")
+USE_X_FORWARDED_HOST = _env_bool("DJANGO_USE_X_FORWARDED_HOST", default=False)
 
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
+# --- Logging (servidor): niveles por categoría vía .env (ver LINEAMIENTOS §15 y .env.example)
+_LOG_LEVEL_NAMES = frozenset(
+    {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+)
+
+
+def _log_level_name(key: str, *, default: str) -> str:
+    s = _env_str(key, "").strip().upper()
+    if not s:
+        return default
+    return s if s in _LOG_LEVEL_NAMES else default
+
+
+_root_default = "DEBUG" if DEBUG else "INFO"
+LOG_ROOT_LEVEL = _log_level_name("DJANGO_LOG_ROOT_LEVEL", default=_root_default)
+LOG_DJANGO_LEVEL = _log_level_name(
+    "DJANGO_LOG_DJANGO_LEVEL",
+    default="INFO" if DEBUG else "WARNING",
+)
+LOG_SQL = _env_bool("DJANGO_LOG_SQL", default=False)
+LOG_REQUEST = _env_bool("DJANGO_LOG_REQUEST", default=False)
+LOG_SERVER = _env_bool("DJANGO_LOG_SERVER", default=DEBUG)
+LOG_SECURITY = _env_bool("DJANGO_LOG_SECURITY", default=False)
+LOG_CORE = _env_bool("DJANGO_LOG_CORE", default=False)
+
+BROWSER_CONSOLE_LOG_ENABLED = _env_bool("DJANGO_BROWSER_CONSOLE_LOG", default=False)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+            "level": logging.DEBUG,
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": LOG_ROOT_LEVEL,
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": LOG_DJANGO_LEVEL,
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "DEBUG" if LOG_REQUEST else "ERROR",
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["console"],
+            "level": "INFO" if LOG_SERVER else "WARNING",
+            "propagate": False,
+        },
+        "django.db.backends": {
+            "handlers": ["console"],
+            "level": "DEBUG" if LOG_SQL else "WARNING",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console"],
+            "level": "DEBUG" if LOG_SECURITY else "WARNING",
+            "propagate": False,
+        },
+        "core": {
+            "handlers": ["console"],
+            "level": "DEBUG" if LOG_CORE else "INFO",
+            "propagate": False,
+        },
+    },
+}
+
+# https://docs.djangoproject.com/en/6.0/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
@@ -94,6 +196,7 @@ TEMPLATES = [
                 'django.template.context_processors.i18n',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.browser_logging',
             ],
         },
     },
@@ -103,7 +206,7 @@ WSGI_APPLICATION = 'ConsejoMunicipalPalavecino.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -114,7 +217,7 @@ DATABASES = {
 
 
 # Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -133,7 +236,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
+# https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = 'es'
 
@@ -154,7 +257,7 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
+# https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
 
