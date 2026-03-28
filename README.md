@@ -81,6 +81,39 @@ python manage.py runserver
 
 - **[LINEAMIENTOS.md](LINEAMIENTOS.md)** — convenciones obligatorias: código en inglés, UI en es/en, Tailwind, seguridad, pruebas, i18n, rendimiento, accesibilidad y criterios de “hecho” antes de integrar.
 
+## Gunicorn (producción)
+
+El módulo WSGI es el del **proyecto** `ConsejoMunicipalPalavecino`, no la app `core`:
+
+```bash
+gunicorn ConsejoMunicipalPalavecino.wsgi:application --bind 127.0.0.1:8000
+```
+
+### CSS y estáticos (si no ves estilos)
+
+Con **`DEBUG=False`** Django **no** sirve `static/` solo. Este proyecto usa **WhiteNoise** y `collectstatic`.
+
+1. Variables de entorno: el proyecto carga `.env` al arrancar (vía `python-dotenv` en `settings.py`). También puedes exportar variables en systemd/shell.
+
+   - `DJANGO_DEBUG=False`
+   - `DJANGO_ALLOWED_HOSTS=tudominio.com,www.tudominio.com` (obligatorio si `DEBUG` es falso)
+   - `DJANGO_SECRET_KEY=` (cadena larga y secreta; no uses la de desarrollo)
+
+   El **puerto** no se configura en `settings.py`: va en `gunicorn --bind` o en `runserver host:puerto` (ver ejemplo de Gunicorn más arriba).
+
+2. En el servidor, tras cada despliegue o cambio en `static/`:
+
+   ```bash
+   cd ~/consejo-municipal-palavecino
+   source venv/bin/activate
+   pip install -r requirements.txt
+   python manage.py collectstatic --noinput
+   ```
+
+3. Reinicia Gunicorn (o el servicio que uses).
+
+En local, con `DEBUG=True`, no hace falta `collectstatic` para ver los estilos (WhiteNoise usa los finders de desarrollo).
+
 ## Licencia
 
 _Pendiente si aplica._
