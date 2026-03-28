@@ -73,6 +73,14 @@ if DEBUG:
 # Tras nginx/apache como proxy: que Host se tome de X-Forwarded-Host (solo si confías en el proxy).
 USE_X_FORWARDED_HOST = _env_bool("DJANGO_USE_X_FORWARDED_HOST", default=False)
 
+# HTTPS en producción (certificado y proxy ya configurados; nginx debe enviar X-Forwarded-Proto).
+# No activar en local HTTP: rompería cookies CSRF/session y redirecciones. Usa DJANGO_SECURE_SSL=True en .env.
+if _env_bool("DJANGO_SECURE_SSL", default=False):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
 # --- Logging (servidor): niveles por categoría vía .env (ver LINEAMIENTOS §15 y .env.example)
 _LOG_LEVEL_NAMES = frozenset(
     {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
