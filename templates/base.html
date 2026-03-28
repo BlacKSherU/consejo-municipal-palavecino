@@ -99,18 +99,18 @@
           <button
             type="button"
             id="theme-toggle"
-            class="ml-1 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-100/90 text-slate-600 outline-none ring-brand transition hover:bg-white hover:text-brand hover:shadow-sm dark:border-slate-600 dark:bg-slate-800/90 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-brand-sky focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+            class="ml-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-100/90 text-slate-600 outline-none ring-brand transition hover:bg-white hover:text-brand hover:shadow-sm dark:border-slate-600 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-brand-sky focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
             data-aria-light="{% trans 'Switch to light theme' %}"
             data-aria-dark="{% trans 'Switch to dark theme' %}"
             aria-label="{% trans 'Switch to dark theme' %}"
             aria-pressed="false"
           >
-            {% comment %}Moon in light mode: Heroicons 24/solid/moon{% endcomment %}
-            <span class="dark:hidden" aria-hidden="true">
+            {% comment %}Moon (light UI): Heroicons 24/solid/moon — use flex + dark:hidden so Tailwind toggles reliably{% endcomment %}
+            <span class="flex h-5 w-5 items-center justify-center text-slate-600 dark:hidden" aria-hidden="true">
               {% include "includes/icons/heroicon_moon_24_solid.html" %}
             </span>
-            {% comment %}Sun in dark mode: Heroicons 24/solid/sun{% endcomment %}
-            <span class="hidden dark:inline" aria-hidden="true">
+            {% comment %}Sun (dark UI): hidden until .dark on html{% endcomment %}
+            <span class="hidden h-5 w-5 items-center justify-center text-slate-200 dark:flex" aria-hidden="true">
               {% include "includes/icons/heroicon_sun_24_solid.html" %}
             </span>
           </button>

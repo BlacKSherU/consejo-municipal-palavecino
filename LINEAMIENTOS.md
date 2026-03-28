@@ -18,6 +18,7 @@ Este documento define convenciones y buenas prácticas que el equipo debe seguir
 - **Código fuente y comentarios en inglés** ([§11](#11-estilo-de-código-e-idioma-del-código-fuente)); la **interfaz de usuario** usa **español por defecto** y admite **inglés y español** como idiomas principales del sitio ([§4](#4-internacionalización-i18n-y-localización-l10n)).
 - **Interfaz responsive en todo el proyecto** ([§5](#5-framework-css-oficial-tailwind-css)): diseño adaptable a móviles, tablets y escritorio, sin depender de un ancho fijo.
 - **Iconografía** con conjuntos oficiales ([§5](#5-framework-css-oficial-tailwind-css)): Heroicons (preferido) o Bootstrap Icons (alternativa), sin SVG inventados a mano.
+- **Compatibilidad de runtime:** **Python 3.8+** (incl. 3.8.10 en producción) y **Django 4.2 LTS** salvo acuerdo de subida de versión ([§14](#14-dependencias-y-entorno-python)).
 
 ---
 
@@ -188,7 +189,9 @@ Este documento define convenciones y buenas prácticas que el equipo debe seguir
 - **`requirements.txt`** (o lockfile equivalente) versionado en el repo; instalar con `pip install -r requirements.txt` dentro de un **entorno virtual** (`venv`), no mezclar paquetes con el Python del sistema.
 - Añadir dependencias de forma explícita; **no** commitear el directorio `venv/`.
 - Antes de subir cambios que afecten dependencias, actualizar el archivo de requisitos y mencionarlo en el PR.
-- La versión de **Python** objetivo debe documentarse en el `README` y mantenerse alineada con el despliegue (CI/servidor).
+- **Versión de Python (obligatorio):** el proyecto debe ser **compatible con Python 3.8** como mínimo (incluye despliegues con **3.8.10**). No introducir sintaxis ni dependencias que exijan 3.9+ sin decisión explícita y actualización del `README` y de este documento.
+- **Django:** usar la rama **4.2 LTS** acordada en `requirements.txt` mientras el soporte a 3.8 esté vigente. Subidas de versión mayor de Django/Python requieren revisión de compatibilidad y despliegue.
+- La versión de **Python** concreta del entorno de producción debe figurar en el `README` y mantenerse alineada con CI y servidores.
 
 ---
 
@@ -248,12 +251,13 @@ Antes de considerar una tarea lista para integrar (salvo excepciones acordadas),
 
 ## Referencias útiles
 
-- [Django: Design philosophies](https://docs.djangoproject.com/en/stable/misc/design-philosophies/)
-- [Django: Translation](https://docs.djangoproject.com/en/stable/topics/i18n/translation/)
-- [Django: Static files](https://docs.djangoproject.com/en/stable/howto/static-files/)
-- [Django: Deployment checklist](https://docs.djangoproject.com/en/stable/howto/deployment/checklist/)
-- [Django: Logging](https://docs.djangoproject.com/en/stable/topics/logging/)
-- [Django: Database optimization](https://docs.djangoproject.com/en/stable/topics/db/optimization/)
+- [Django 4.2: Documentación](https://docs.djangoproject.com/en/4.2/) (versión alineada con el `requirements.txt`)
+- [Django: Design philosophies](https://docs.djangoproject.com/en/4.2/misc/design-philosophies/)
+- [Django: Translation](https://docs.djangoproject.com/en/4.2/topics/i18n/translation/)
+- [Django: Static files](https://docs.djangoproject.com/en/4.2/howto/static-files/)
+- [Django: Deployment checklist](https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/)
+- [Django: Logging](https://docs.djangoproject.com/en/4.2/topics/logging/)
+- [Django: Database optimization](https://docs.djangoproject.com/en/4.2/topics/db/optimization/)
 - [Tailwind CSS: Documentación](https://tailwindcss.com/docs)
 - [Tailwind CSS: Responsive design](https://tailwindcss.com/docs/responsive-design)
 - [Heroicons](https://heroicons.com) (iconos oficiales del ecosistema Tailwind)

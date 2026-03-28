@@ -1,6 +1,5 @@
-# Pin versions for reproducible installs. Update with: pip freeze > requirements.txt
-asgiref==3.11.1
-Django==6.0.3
-sqlparse==0.5.5
-tzdata==2025.3
+# Python 3.8+ (incl. 3.8.10). Django 4.2 LTS.
+# Al cambiar de rama mayor de Django/Python, actualizar README y LINEAMIENTOS.
+
+Django==4.2.17
 Babel==2.17.0
