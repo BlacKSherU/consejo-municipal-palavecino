@@ -98,6 +98,9 @@ Con **`DEBUG=False`** Django **no** sirve `static/` solo. Este proyecto usa **Wh
    - `DJANGO_DEBUG=False`
    - `DJANGO_ALLOWED_HOSTS=tudominio.com,www.tudominio.com` (obligatorio si `DEBUG` es falso)
    - `DJANGO_SECRET_KEY=` (cadena larga y secreta; no uses la de desarrollo)
+   - Si usas **nginx** delante y ves 400 con `DEBUG=False`, prueba `DJANGO_USE_X_FORWARDED_HOST=True` (solo si confías en ese proxy).
+
+   Con **`DJANGO_DEBUG=True`**, el proyecto usa `ALLOWED_HOSTS=['*']` para que no fallen peticiones por IP u otro host no listado (solo para depuración; no lo dejes así en internet).
 
    El **puerto** no se configura en `settings.py`: va en `gunicorn --bind` o en `runserver host:puerto` (ver ejemplo de Gunicorn más arriba).
 

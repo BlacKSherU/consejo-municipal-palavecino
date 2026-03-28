@@ -30,7 +30,9 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("1", "true", "yes")
+DEBUG = (
+    os.environ.get("DJANGO_DEBUG", "True").strip().lower() in ("1", "true", "yes")
+)
 
 _allowed_hosts_raw = os.environ.get("DJANGO_ALLOWED_HOSTS", "")
 if _allowed_hosts_raw.strip():
@@ -39,6 +41,17 @@ if _allowed_hosts_raw.strip():
     ]
 else:
     ALLOWED_HOSTS = []
+
+if DEBUG:
+    # Documentación Django: con DEBUG=True, ['*'] evita 400 al entrar por IP, otro hostname
+    # o dominio no listado en DJANGO_ALLOWED_HOSTS (típico detrás de nginx). No uses DEBUG
+    # en un entorno real expuesto a internet.
+    ALLOWED_HOSTS = ["*"]
+
+# Tras nginx/apache como proxy: que Host se tome de X-Forwarded-Host (solo si confías en el proxy).
+USE_X_FORWARDED_HOST = os.environ.get(
+    "DJANGO_USE_X_FORWARDED_HOST", ""
+).strip().lower() in ("1", "true", "yes")
 
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
