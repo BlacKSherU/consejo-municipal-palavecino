@@ -1,0 +1,10 @@
+# Copia este archivo como .dev.vars (no subir a git) y rellena.
+# Wrangler carga .dev.vars en `wrangler dev`.
+
+JWT_SECRET=local-dev-cambiar
+# CORS_ORIGIN debe ser la URL del sitio en Pages (https://...), no la del Worker.
+# CORS_ORIGIN=https://tu-proyecto.pages.dev
+
+# Opcional — Instagram Graph API
+# META_ACCESS_TOKEN=
+# INSTAGRAM_USER_ID=

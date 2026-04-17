@@ -14,11 +14,16 @@ database_id = "820094b1-8cc1-4a23-a1cc-26eb3f928910"
 binding = "BUCKET"
 bucket_name = "cmp-assets"
 
+# Variables locales: usa apps/api/.dev.vars (ver .dev.vars.example) o [vars] abajo.
+# En producción: Dashboard del Worker → Settings → Variables y Secrets.
 [vars]
 JWT_SECRET = "local-dev-jwt-secret-change-in-production"
-CORS_ORIGIN = "cmp-api.tramitesgarciamiguel.workers.dev"
 
-# Secrets (set with wrangler secret put):
-# JWT_SECRET
-# META_ACCESS_TOKEN — long-lived User/Page token with instagram_basic
-# INSTAGRAM_USER_ID — Instagram Business Account id (numeric string)
+# CORS_ORIGIN: URL del sitio en Cloudflare Pages (https://tu-app.pages.dev), NO la del Worker.
+# En producción configúrala en el Dashboard (recomendado) o descomenta:
+# CORS_ORIGIN = "https://tu-proyecto.pages.dev"
+
+# Secretos (nunca en git): wrangler secret put NOMBRE
+#   JWT_SECRET          — en producción sustituye el [vars] de arriba si usas secret
+#   META_ACCESS_TOKEN   — token largo Meta Graph (Instagram)
+#   INSTAGRAM_USER_ID   — id numérico de la cuenta Instagram Business
