@@ -1,0 +1,145 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "Consejo Municipal Bolivariano de Palavecino",
+  description = "Portal institucional — transparencia, participación y servicio a la comunidad.",
+} = Astro.props;
+
+const nav = [
+  { href: "/", label: "Inicio" },
+  { href: "/noticias", label: "Noticias" },
+  { href: "/quienes-somos", label: "Quiénes somos" },
+  { href: "/consejo", label: "Consejo" },
+  { href: "/gacetas", label: "Gacetas" },
+];
+---
+
+<!doctype html>
+<html lang="es" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline>
+      (function () {
+        try {
+          var p = localStorage.getItem("theme-preference");
+          var dark;
+          if (p === "dark") dark = true;
+          else if (p === "light") dark = false;
+          else dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          document.documentElement.classList.toggle("dark", dark);
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body
+    class="min-h-full bg-slate-50 font-sans text-slate-900 antialiased transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100"
+  >
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-brand focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2 dark:focus:ring-offset-slate-950"
+    >
+      Ir al contenido
+    </a>
+
+    <header
+      class="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md dark:border-slate-800/80 dark:bg-slate-950/80"
+      role="banner"
+    >
+      <div
+        class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8"
+      >
+        <a
+          href="/"
+          class="group flex items-center gap-3 rounded-lg outline-none ring-brand focus-visible:ring-2 focus-visible:ring-offset-2 dark:ring-offset-slate-950"
+        >
+          <img
+            src="/logo.svg"
+            width="44"
+            height="44"
+            class="h-10 w-10 shrink-0 transition-transform duration-300 group-hover:scale-105"
+            alt="Emblema Consejo Municipal de Palavecino"
+          />
+          <span
+            class="hidden max-w-[14rem] text-sm font-semibold leading-tight text-slate-800 dark:text-slate-100 sm:block"
+          >
+            Consejo Municipal
+            <span class="block text-xs font-medium text-brand dark:text-brand-muted">Palavecino</span>
+          </span>
+        </a>
+
+        <nav class="flex flex-wrap items-center justify-end gap-2 sm:gap-3" aria-label="Principal">
+          {
+            nav.map((item) => (
+              <a
+                href={item.href}
+                class="rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 transition hover:text-brand dark:text-slate-300 dark:hover:text-brand-sky"
+              >
+                {item.label}
+              </a>
+            ))
+          }
+          <a
+            href="/admin"
+            class="rounded-lg px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-brand dark:text-slate-400"
+          >
+            Admin
+          </a>
+          <button
+            type="button"
+            id="theme-toggle"
+            class="ml-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-100/90 text-slate-600 outline-none ring-brand transition hover:bg-white hover:text-brand hover:shadow-sm dark:border-slate-600 dark:bg-slate-800/90 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-brand-sky focus-visible:ring-2 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+            aria-label="Cambiar tema"
+            aria-pressed="false"
+          >
+            <span class="flex h-5 w-5 items-center justify-center dark:hidden" aria-hidden="true">🌙</span>
+            <span class="hidden h-5 w-5 items-center justify-center dark:flex" aria-hidden="true">☀️</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main-content" role="main" tabindex="-1">
+      <slot />
+    </main>
+
+    <footer
+      class="border-t border-slate-200 bg-slate-100 py-10 dark:border-slate-800 dark:bg-slate-900"
+      role="contentinfo"
+    >
+      <div
+        class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-6 lg:px-8"
+      >
+        <div class="flex items-center gap-3">
+          <img src="/logo.svg" width="40" height="40" class="h-10 w-10" alt="" />
+          <div class="text-sm text-slate-600 dark:text-slate-400">
+            <p class="font-semibold text-slate-800 dark:text-slate-200">
+              Consejo Municipal Bolivariano de Palavecino
+            </p>
+            <p class="mt-1">Todos los derechos reservados.</p>
+          </div>
+        </div>
+        <p class="text-center text-xs text-slate-500 dark:text-slate-500">
+          {new Date().getFullYear()} — Sitio institucional oficial.
+        </p>
+      </div>
+    </footer>
+
+    <script is:inline src="/theme.js"></script>
+  </body>
+</html>

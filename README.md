@@ -1,127 +1,122 @@
-# Consejo Municipal Palavecino
+# Consejo Municipal Bolivariano de Palavecino
 
-Aplicación web del **Consejo Municipal de Palavecino** (Venezuela), desarrollada con **Django**. El proyecto está **iniciado**; las reglas de trabajo, stack e idiomas están fijadas en [`LINEAMIENTOS.md`](LINEAMIENTOS.md).
-
-## Stack
-
-| Área | Elección |
-|------|----------|
-| Backend | **Django 6.0** |
-| Python | **3.12.3+** (referencia: **3.12.3**; alinear dev/CI/producción) |
-| Interfaz | Español por defecto; **es** y **en** como idiomas del sitio |
-| CSS | **Tailwind CSS** (único framework CSS; ver lineamientos) |
-| Iconos | **Heroicons** (npm `heroicons`, alineado con Tailwind); alternativa: Bootstrap Icons |
-| Base de datos (dev) | SQLite (`db.sqlite3`, no versionada) |
+Portal institucional en **Astro** (Cloudflare Pages) y **API REST** en **Cloudflare Workers** (Hono), con **D1** (SQLite), **R2** (PDF e imágenes) e integración con **Instagram Graph API** (Meta).
 
 ## Requisitos
 
-### Python
+- Node.js 18.17+ (recomendado 20+)
+- npm 9+
 
-Versión mínima soportada: **Python 3.12** (Django 6.0 no admite 3.10 ni 3.11). Se recomienda **Python 3.12.3** como versión de referencia en todos los entornos. Con [pyenv](https://github.com/pyenv/pyenv) o similar, el archivo [`.python-version`](.python-version) fija `3.12.3`.
+## Estructura del monorepo
 
-Comprueba:
+- [`apps/web`](apps/web): sitio público y panel `/admin` (Astro + Tailwind).
+- [`apps/api`](apps/api): Worker con rutas `/api/*`.
 
-```bash
-python3 --version   # debe ser >= 3.12 (idealmente 3.12.3)
-```
+## Desarrollo local
 
-### Otros
+En dos terminales:
 
-- Entorno virtual: `python3.12 -m venv venv` (o `python3 -m venv venv` si `python3` es 3.12+)
-- Dependencias: `pip install -r requirements.txt` (recomendado: `pip install --upgrade pip` antes)
-- **Node.js** (solo para compilar CSS de Tailwind en desarrollo o en el pipeline de despliegue)
-
-## Instalación local
-
-```bash
-git clone https://github.com/BlacKSherU/consejo-municipal-palavecino.git
-cd consejo-municipal-palavecino
-python3 -m venv venv
-# Windows:
-venv\Scripts\activate
-# Linux/macOS:
-# source venv/bin/activate
-
-pip install --upgrade pip
-pip install -r requirements.txt
-copy .env.example .env
-# Linux: cp .env.example .env
-# Editar .env cuando integres variables (secret key, hosts, etc.)
-
-npm install
-npm run build
-```
-
-Tras actualizar Django de una versión mayor anterior, si fallan migraciones o la base local de desarrollo, puedes borrar `db.sqlite3` y volver a ejecutar `python manage.py migrate`.
-
-Esto genera [`static/css/app.css`](static/css/app.css). Si cambias plantillas o clases Tailwind, vuelve a ejecutar `npm run build` (o `npm run watch:css` mientras desarrollas).
-
-### Traducciones (gettext)
-
-Los textos de la interfaz están en `locale/<idioma>/LC_MESSAGES/django.po`. Tras editar cadenas en plantillas:
-
-1. Si tienes **GNU gettext** instalado: `python manage.py makemessages -l es -l en` y luego `compilemessages`.
-2. En entornos sin `msgfmt`: usa **Babel** (incluido en `requirements.txt`):
-
-```bash
-pybabel compile -d locale -D django
-```
-
-Vuelve a compilar cuando cambies los `.po`.
-
-```bash
-python manage.py migrate
-python manage.py runserver
-```
-
-- **Inicio / landing:** [http://127.0.0.1:8000/](http://127.0.0.1:8000/)
-- **Admin:** [http://127.0.0.1:8000/admin/](http://127.0.0.1:8000/admin/) (crear superusuario con `createsuperuser`).
-
-## Documentación del equipo
-
-- **[LINEAMIENTOS.md](LINEAMIENTOS.md)** — convenciones obligatorias: código en inglés, UI en es/en, Tailwind, seguridad, pruebas, i18n, rendimiento, accesibilidad y criterios de “hecho” antes de integrar.
-
-## Gunicorn (producción)
-
-El módulo WSGI es el del **proyecto** `ConsejoMunicipalPalavecino`, no la app `core`:
-
-```bash
-gunicorn ConsejoMunicipalPalavecino.wsgi:application --bind 127.0.0.1:8000
-```
-
-### CSS y estáticos (si no ves estilos)
-
-Con **`DEBUG=False`** Django **no** sirve `static/` solo. Este proyecto usa **WhiteNoise** y `collectstatic`.
-
-1. Variables de entorno: el proyecto carga `.env` al arrancar (vía `python-dotenv` en `settings.py`). También puedes exportar variables en systemd/shell.
-
-   - `DJANGO_DEBUG=False`
-   - `DJANGO_ALLOWED_HOSTS=tudominio.com,www.tudominio.com` (obligatorio si `DEBUG` es falso)
-   - `DJANGO_SECRET_KEY=` (cadena larga y secreta; no uses la de desarrollo)
-   - Si usas **nginx** delante y ves 400 con `DEBUG=False`, prueba `DJANGO_USE_X_FORWARDED_HOST=True` (solo si confías en ese proxy).
-   - Con **HTTPS** terminado en nginx (certificado listo), pon `DJANGO_SECURE_SSL=True` para cookies seguras, redirección HTTP→HTTPS y `SECURE_PROXY_SSL_HEADER` (nginx debe enviar `X-Forwarded-Proto https`).
-
-   Con **`DJANGO_DEBUG=True`**, el proyecto usa `ALLOWED_HOSTS=['*']` para que no fallen peticiones por IP u otro host no listado (solo para depuración; no lo dejes así en internet).
-
-   El **puerto** no se configura en `settings.py`: va en `gunicorn --bind` o en `runserver host:puerto` (ver ejemplo de Gunicorn más arriba).
-
-2. En el servidor, tras cada despliegue o cambio en `static/`:
+1. **API (Worker)** — aplica migraciones D1 locales la primera vez:
 
    ```bash
-   cd ~/consejo-municipal-palavecino
-   source venv/bin/activate
-   pip install -r requirements.txt
-   python manage.py collectstatic --noinput
+   cd apps/api
+   npm install
+   npx wrangler d1 migrations apply cmp-db --local
+   npx wrangler dev
    ```
 
-3. Reinicia Gunicorn (o el servicio que uses).
+   Por defecto escucha en `http://127.0.0.1:8787`. En [`wrangler.toml`](apps/api/wrangler.toml) está definido `JWT_SECRET` para desarrollo; en producción use `npx wrangler secret put JWT_SECRET`.
 
-En local, con `DEBUG=True`, no hace falta `collectstatic` para ver los estilos (WhiteNoise usa los finders de desarrollo).
+   **Nota:** el CLI no queda global como `wrangler`. Desde `apps/api` usa siempre `npx wrangler …` (por ejemplo `npx wrangler deploy --dry-run`) o los scripts npm: `npm run deploy`, `npm run deploy:dry-run`, `npm run dev`.
 
-### Logging (servidor y consola del navegador)
+2. **Sitio (Astro)** — el proxy envía `/api` al Worker:
 
-Las variables `DJANGO_LOG_*` y `DJANGO_BROWSER_CONSOLE_LOG` en `.env` activan o silencian categorías concretas (SQL, peticiones, app `core`, etc.). Detalle y convenciones en [LINEAMIENTOS.md §15.1](LINEAMIENTOS.md#151-logging-del-servidor-y-consola-del-navegador-interruptores-por-entorno).
+   ```bash
+   cd apps/web
+   npm install
+   npm run dev
+   ```
 
-## Licencia
+   Abre `http://localhost:4321`. Opcional: `PUBLIC_API_URL` vacío usa el mismo origen (proxy).
 
-_Pendiente si aplica._
+### Primer usuario administrador
+
+Genera el SQL de inserción (hash compatible con el Worker):
+
+```bash
+cd apps/api
+node scripts/seed-admin.mjs tu@email.com tu_contraseña
+```
+
+Ejecuta la sentencia `INSERT` impresa contra la base local:
+
+```bash
+npx wrangler d1 execute cmp-db --local --command "INSERT INTO admin_users ..."
+```
+
+(Asegúrate de escapar comillas según tu shell o usa un archivo `.sql`.)
+
+### Instagram (Meta)
+
+1. Cuenta Instagram profesional vinculada a una página de Facebook.
+2. App en [Meta for Developers](https://developers.facebook.com/) con permisos para leer medios de la cuenta de Instagram.
+3. En el Worker, secretos (producción):
+
+   ```bash
+   npx wrangler secret put META_ACCESS_TOKEN
+   npx wrangler secret put INSTAGRAM_USER_ID
+   ```
+
+El cron (`0 */6 * * *` en `wrangler.toml`) refresca la caché en D1; el panel **Admin → Instagram** permite forzar una actualización.
+
+## Despliegue en Cloudflare
+
+### Worker (API)
+
+1. Crea base **D1** y bucket **R2** en el dashboard o con Wrangler.
+2. Copia el `database_id` real en [`apps/api/wrangler.toml`](apps/api/wrangler.toml) y el nombre del bucket.
+3. Configura secretos: `JWT_SECRET`, `META_ACCESS_TOKEN`, `INSTAGRAM_USER_ID`.
+4. Variable opcional `CORS_ORIGIN`: lista separada por comas con el origen del sitio Pages (por ejemplo `https://cmp.pages.dev`).
+5. Despliega:
+
+   ```bash
+   cd apps/api
+   npm run deploy
+   npx wrangler d1 migrations apply cmp-db --remote
+   ```
+
+### Pages (sitio Astro)
+
+**Importante:** el repositorio en GitHub debe ser el **monorepo actual** (carpetas `apps/web` y `apps/api`, `package.json` en la raíz con `workspaces`, **sin** `requirements.txt` ni el antiguo build de Tailwind a `static/css`). Si el build en Cloudflare sigue ejecutando `pip install -r requirements.txt` o `tailwindcss -i ./src/tailwind/...`, estás desplegando un **commit viejo**: haz `git push` del código migrado.
+
+Elige **una** de estas configuraciones en **Workers & Pages → tu proyecto → Settings → Builds**:
+
+#### Opción A (recomendada): carpeta solo del front
+
+| Campo | Valor |
+|--------|--------|
+| **Root directory** | `apps/web` |
+| **Build command** | `npm install && npm run build` |
+| **Build output directory** | `dist` |
+
+Así solo se instalan dependencias de Astro y la salida es `apps/web/dist`.
+
+#### Opción B: raíz del monorepo
+
+| Campo | Valor |
+|--------|--------|
+| **Root directory** | `/` (vacío o `.`) |
+| **Build command** | `npm install && npm run build` |
+| **Build output directory** | `apps/web/dist` |
+
+El `package.json` de la raíz debe tener el script `build` que ejecuta el workspace `@cmp/web` (como en este repo).
+
+**Variables de entorno (Production):**
+
+- **`PUBLIC_API_URL`**: URL del Worker, **sin** barra final, p. ej. `https://cmp-api.xxx.workers.dev`. Vacía solo si el HTML y `/api` sirven desde el **mismo origen** (mismo dominio).
+
+**CORS:** en el Worker, define `CORS_ORIGIN` con la URL del sitio Pages (p. ej. `https://tu-proyecto.pages.dev`) para que el navegador pueda llamar al API desde otro dominio.
+
+## Licencia y créditos
+
+Proyecto municipal. Tipografía: Plus Jakarta Sans (Google Fonts).

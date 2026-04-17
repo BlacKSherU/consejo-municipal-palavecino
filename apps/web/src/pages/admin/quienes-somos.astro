@@ -1,0 +1,45 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Quiénes somos">
+  <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Quiénes somos</h1>
+  <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Markdown. Visible en la página pública.</p>
+  <form id="about-form" class="mt-6 space-y-4">
+    <textarea
+      name="body"
+      id="about-body"
+      rows="18"
+      class="w-full rounded-xl border border-slate-300 p-4 font-mono text-sm dark:border-slate-600 dark:bg-slate-900"
+    ></textarea>
+    <p id="about-msg" class="text-sm text-green-700 dark:text-green-400"></p>
+    <button type="submit" class="rounded-xl bg-brand px-6 py-2 text-sm font-semibold text-white">Guardar</button>
+  </form>
+</AdminLayout>
+
+<script>
+  import { apiFetch } from "../../lib/api";
+
+  async function load() {
+    const ta = document.getElementById("about-body") as HTMLTextAreaElement;
+    const res = await apiFetch("/api/admin/site/about");
+    if (!res.ok) return;
+    const data = await res.json();
+    if (ta) ta.value = data.body || "";
+  }
+
+  document.getElementById("about-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const ta = document.getElementById("about-body") as HTMLTextAreaElement;
+    const msg = document.getElementById("about-msg");
+    if (!ta) return;
+    const res = await apiFetch("/api/admin/site/about", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: ta.value }),
+    });
+    if (msg) msg.textContent = res.ok ? "Guardado." : "Error al guardar.";
+  });
+
+  load();
+</script>

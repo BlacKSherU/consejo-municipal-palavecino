@@ -1,0 +1,148 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Inicio — Consejo Municipal de Palavecino">
+  <section
+    id="top"
+    class="relative overflow-hidden bg-hero-light dark:bg-hero-dark"
+    aria-labelledby="hero-heading"
+  >
+    <div
+      class="pointer-events-none absolute -left-32 top-20 h-72 w-72 rounded-full bg-brand/20 blur-3xl dark:bg-brand/30"
+      aria-hidden="true"
+    >
+    </div>
+    <div
+      class="pointer-events-none absolute -right-24 bottom-10 h-80 w-80 rounded-full bg-brand-teal/20 blur-3xl dark:bg-brand-teal/25"
+      aria-hidden="true"
+    >
+    </div>
+
+    <div
+      class="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:flex lg:items-center lg:gap-12 lg:py-28 lg:px-8"
+    >
+      <div class="max-w-2xl flex-1">
+        <p
+          class="mb-4 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand shadow-sm dark:border-brand-muted/30 dark:bg-slate-900/60 dark:text-brand-muted"
+        >
+          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-teal"></span>
+          Portal institucional
+        </p>
+        <h1
+          id="hero-heading"
+          class="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl dark:text-white"
+        >
+          <span class="bg-brand-gradient bg-clip-text text-transparent">
+            Consejo Municipal Bolivariano
+          </span>
+          <span class="mt-2 block text-slate-800 dark:text-slate-100">de Palavecino</span>
+        </h1>
+        <p class="mt-6 text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+          Servimos con transparencia, participación y compromiso con el desarrollo local. Conozca nuestro
+          trabajo y conéctese con el consejo.
+        </p>
+        <div class="mt-10 flex flex-wrap gap-4">
+          <a
+            href="/noticias"
+            class="inline-flex items-center justify-center rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand dark:shadow-brand/20"
+          >
+            Noticias
+          </a>
+          <a
+            href="/gacetas"
+            class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white/80 px-6 py-3 text-sm font-semibold text-slate-800 backdrop-blur transition hover:border-brand/40 hover:bg-white dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:border-brand-muted/50"
+          >
+            Gacetas oficiales
+          </a>
+        </div>
+      </div>
+      <div class="relative mt-14 flex flex-1 justify-center lg:mt-0">
+        <div
+          class="relative aspect-square w-full max-w-md animate-float rounded-3xl border border-white/50 bg-white/40 p-8 shadow-2xl shadow-brand/10 backdrop-blur-md dark:border-slate-700/50 dark:bg-slate-900/40 dark:shadow-brand/5"
+        >
+          <img
+            src="/logo.svg"
+            alt=""
+            class="mx-auto h-48 w-48 opacity-90 dark:opacity-100"
+            role="presentation"
+          />
+          <p class="mt-6 text-center text-sm font-medium text-slate-600 dark:text-slate-300">
+            Juntos construimos el futuro de nuestro municipio.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-y border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-900">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Instagram</h2>
+      <p class="mt-2 text-slate-600 dark:text-slate-400">
+        Publicaciones recientes (sincronizadas desde la cuenta oficial).
+      </p>
+      <div
+        id="ig-feed"
+        class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
+        data-api={import.meta.env.PUBLIC_API_URL || ""}
+      >
+      </div>
+      <p id="ig-status" class="mt-4 text-sm text-slate-500"></p>
+    </div>
+  </section>
+
+  <section id="mission" class="py-16 dark:bg-slate-950">
+    <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-3xl text-center">
+        <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Nuestra misión</h2>
+        <p class="mt-4 text-lg text-slate-600 dark:text-slate-300">
+          Ejercer funciones legislativas y de control con integridad, apertura y cercanía con el pueblo,
+          fortaleciendo la democracia participativa local.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  import { apiUrl } from "../lib/api";
+
+  async function loadIg() {
+    const root = document.getElementById("ig-feed");
+    const status = document.getElementById("ig-status");
+    if (!root) return;
+    try {
+      const res = await fetch(apiUrl("/api/instagram/feed"));
+      const data = await res.json();
+      const items = data.items || [];
+      if (data.error && status) status.textContent = "Aviso: " + data.error;
+      else if (status) status.textContent = data.fetched_at ? "Actualizado: " + data.fetched_at : "";
+      root.innerHTML = "";
+      const list = Array.isArray(items) ? items : [];
+      if (list.length === 0) {
+        root.innerHTML =
+          '<p class="text-slate-500">No hay publicaciones en caché. Configure Meta en el Worker y use «Actualizar» en el panel admin.</p>';
+        return;
+      }
+      for (const it of list.slice(0, 6)) {
+        const el = document.createElement("a");
+        el.href = it.permalink || "#";
+        el.target = "_blank";
+        el.rel = "noopener noreferrer";
+        el.className =
+          "group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md dark:border-slate-700 dark:bg-slate-900";
+        const imgUrl = it.media_type === "VIDEO" ? it.thumbnail_url || it.media_url : it.media_url;
+        el.innerHTML = `
+          <div class="aspect-square w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+            ${imgUrl ? `<img src="${imgUrl}" alt="" class="h-full w-full object-cover transition group-hover:scale-105" loading="lazy" />` : ""}
+          </div>
+          <p class="line-clamp-3 p-3 text-xs text-slate-600 dark:text-slate-300">${(it.caption || "").replace(/</g, "&lt;")}</p>
+        `;
+        root.appendChild(el);
+      }
+    } catch {
+      if (status) status.textContent = "No se pudo cargar Instagram.";
+    }
+  }
+  loadIg();
+</script>

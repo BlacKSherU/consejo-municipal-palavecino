@@ -1,0 +1,52 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="Noticia — Consejo Municipal de Palavecino">
+  <article class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+    <p class="mb-6">
+      <a href="/noticias" class="text-sm font-medium text-brand hover:underline">← Volver a noticias</a>
+    </p>
+    <div id="article-root">
+      <p class="text-slate-500">Cargando…</p>
+    </div>
+  </article>
+</BaseLayout>
+
+<script>
+  import { marked } from "marked";
+  import { apiUrl } from "../../lib/api";
+
+  async function load() {
+    const root = document.getElementById("article-root");
+    if (!root) return;
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get("slug");
+    if (!slug) {
+      root.innerHTML = "<p>Falta el parámetro slug.</p>";
+      return;
+    }
+    try {
+      const res = await fetch(apiUrl("/api/news/" + encodeURIComponent(slug)));
+      if (!res.ok) {
+        root.innerHTML = "<p>Noticia no encontrada.</p>";
+        return;
+      }
+      const n = await res.json();
+      document.title = n.title + " — Consejo Municipal de Palavecino";
+      root.innerHTML = `
+        <h1 class="text-3xl font-bold text-slate-900 dark:text-white">${escapeHtml(n.title)}</h1>
+        <p class="mt-2 text-sm text-slate-500">${escapeHtml(n.published_at || "")}</p>
+        <div class="prose prose-slate mt-8 max-w-none dark:prose-invert">${marked.parse(n.body || "")}</div>
+      `;
+    } catch {
+      root.innerHTML = "<p>Error al cargar la noticia.</p>";
+    }
+  }
+
+  function escapeHtml(s: string) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
+  }
+
+  load();
+</script>

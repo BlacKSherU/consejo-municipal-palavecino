@@ -1,0 +1,17 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Panel">
+  <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Bienvenido</h1>
+  <p class="mt-2 text-slate-600 dark:text-slate-400">
+    Use el menú para editar noticias, texto institucional, integración del consejo, gacetas e Instagram.
+  </p>
+  <ul class="mt-8 list-inside list-disc space-y-2 text-slate-700 dark:text-slate-300">
+    <li><a class="text-brand hover:underline" href="/admin/noticias">Noticias</a></li>
+    <li><a class="text-brand hover:underline" href="/admin/quienes-somos">Quiénes somos</a></li>
+    <li><a class="text-brand hover:underline" href="/admin/consejo">Puestos y consejales</a></li>
+    <li><a class="text-brand hover:underline" href="/admin/gacetas">Gacetas oficiales (PDF)</a></li>
+    <li><a class="text-brand hover:underline" href="/admin/instagram">Instagram</a></li>
+  </ul>
+</AdminLayout>

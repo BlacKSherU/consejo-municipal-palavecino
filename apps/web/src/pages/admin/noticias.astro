@@ -1,0 +1,141 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Noticias">
+  <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Noticias</h1>
+
+  <section class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
+    <h2 class="text-lg font-semibold">Nueva noticia</h2>
+    <form id="news-create" class="mt-4 grid gap-3 sm:grid-cols-2">
+      <label class="sm:col-span-2">
+        <span class="text-sm font-medium">Título</span>
+        <input name="title" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-950" />
+      </label>
+      <label class="sm:col-span-2">
+        <span class="text-sm font-medium">Slug (opcional)</span>
+        <input name="slug" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-950" />
+      </label>
+      <label class="sm:col-span-2">
+        <span class="text-sm font-medium">Resumen</span>
+        <input name="excerpt" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-950" />
+      </label>
+      <label class="sm:col-span-2">
+        <span class="text-sm font-medium">Cuerpo (Markdown)</span>
+        <textarea name="body" rows="8" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm dark:border-slate-600 dark:bg-slate-950"></textarea>
+      </label>
+      <label class="flex items-center gap-2">
+        <input name="published" type="checkbox" class="rounded" checked />
+        <span class="text-sm">Publicada</span>
+      </label>
+      <div class="flex items-end">
+        <button type="submit" class="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-white">Crear</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="mt-10">
+    <h2 class="text-lg font-semibold">Listado</h2>
+    <div id="news-admin-list" class="mt-4 space-y-4"></div>
+  </section>
+</AdminLayout>
+
+<script>
+  import { apiFetch } from "../../lib/api";
+
+  async function loadList() {
+    const root = document.getElementById("news-admin-list");
+    if (!root) return;
+    const res = await apiFetch("/api/admin/news");
+    const data = await res.json();
+    const items = data.items || [];
+    root.innerHTML = "";
+    for (const n of items) {
+      const card = document.createElement("div");
+      card.className =
+        "rounded-xl border border-slate-200 p-4 dark:border-slate-700";
+      card.innerHTML = `
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <p class="font-semibold">${escapeHtml(n.title)}</p>
+            <p class="text-xs text-slate-500">${escapeHtml(n.slug)} · ${n.published ? "publicada" : "borrador"}</p>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" class="text-sm text-brand hover:underline" data-edit="${n.id}">Editar</button>
+            <button type="button" class="text-sm text-red-600 hover:underline" data-del="${n.id}">Eliminar</button>
+          </div>
+        </div>
+        <div id="edit-${n.id}" class="mt-4 hidden border-t border-slate-100 pt-4 dark:border-slate-800"></div>
+      `;
+      root.appendChild(card);
+
+      card.querySelector(`[data-edit="${n.id}"]`)?.addEventListener("click", () => {
+        const box = card.querySelector(`#edit-${n.id}`) as HTMLElement;
+        if (!box) return;
+        box.classList.toggle("hidden");
+        if (!box.classList.contains("hidden") && !box.dataset.ready) {
+          box.dataset.ready = "1";
+          box.innerHTML = `
+            <label class="block text-sm">Título<input data-f="title" class="mt-1 w-full rounded border px-2 py-1 dark:bg-slate-950" value="${escapeAttr(n.title)}" /></label>
+            <label class="mt-2 block text-sm">Slug<input data-f="slug" class="mt-1 w-full rounded border px-2 py-1 dark:bg-slate-950" value="${escapeAttr(n.slug)}" /></label>
+            <label class="mt-2 block text-sm">Resumen<input data-f="excerpt" class="mt-1 w-full rounded border px-2 py-1 dark:bg-slate-950" value="${escapeAttr(n.excerpt)}" /></label>
+            <label class="mt-2 block text-sm">Cuerpo<textarea data-f="body" rows="6" class="mt-1 w-full rounded border px-2 py-1 font-mono text-xs dark:bg-slate-950">${escapeHtml(n.body)}</textarea></label>
+            <label class="mt-2 flex items-center gap-2 text-sm"><input data-f="published" type="checkbox" ${n.published ? "checked" : ""} /> Publicada</label>
+            <button type="button" data-save="${n.id}" class="mt-3 rounded bg-brand px-3 py-1 text-sm text-white">Guardar</button>
+          `;
+          box.querySelector(`[data-save="${n.id}"]`)?.addEventListener("click", async () => {
+            const title = (box.querySelector('[data-f="title"]') as HTMLInputElement).value;
+            const slug = (box.querySelector('[data-f="slug"]') as HTMLInputElement).value;
+            const excerpt = (box.querySelector('[data-f="excerpt"]') as HTMLInputElement).value;
+            const body = (box.querySelector('[data-f="body"]') as HTMLTextAreaElement).value;
+            const published = (box.querySelector('[data-f="published"]') as HTMLInputElement).checked;
+            const resPut = await apiFetch("/api/admin/news/" + n.id, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ title, slug, excerpt, body, published, published_at: n.published_at }),
+            });
+            if (resPut.ok) loadList();
+          });
+        }
+      });
+
+      card.querySelector(`[data-del="${n.id}"]`)?.addEventListener("click", async () => {
+        if (!confirm("¿Eliminar esta noticia?")) return;
+        await apiFetch("/api/admin/news/" + n.id, { method: "DELETE" });
+        loadList();
+      });
+    }
+  }
+
+  function escapeHtml(s: string) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/"/g, "&quot;");
+  }
+  function escapeAttr(s: string) {
+    return escapeHtml(s).replace(/'/g, "&#39;");
+  }
+
+  document.getElementById("news-create")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const fd = new FormData(form);
+    const title = String(fd.get("title") || "");
+    const slug = String(fd.get("slug") || "").trim();
+    const excerpt = String(fd.get("excerpt") || "");
+    const body = String(fd.get("body") || "");
+    const published = fd.get("published") === "on";
+    const res = await apiFetch("/api/admin/news", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, slug: slug || undefined, excerpt, body, published }),
+    });
+    if (res.ok) {
+      form.reset();
+      loadList();
+    }
+  });
+
+  loadList();
+</script>

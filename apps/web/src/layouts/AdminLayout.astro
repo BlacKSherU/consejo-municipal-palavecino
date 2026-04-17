@@ -1,0 +1,49 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Administración" } = Astro.props;
+---
+
+<BaseLayout title={`${title} — Admin`}>
+  <div class="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+    <nav class="mb-8 flex flex-wrap gap-3 border-b border-slate-200 pb-4 text-sm dark:border-slate-700">
+      <a href="/admin" class="font-medium text-brand hover:underline">Panel</a>
+      <a href="/admin/noticias" class="text-slate-600 hover:text-brand dark:text-slate-300">Noticias</a>
+      <a href="/admin/quienes-somos" class="text-slate-600 hover:text-brand dark:text-slate-300">Quiénes somos</a>
+      <a href="/admin/consejo" class="text-slate-600 hover:text-brand dark:text-slate-300">Consejo</a>
+      <a href="/admin/gacetas" class="text-slate-600 hover:text-brand dark:text-slate-300">Gacetas</a>
+      <a href="/admin/instagram" class="text-slate-600 hover:text-brand dark:text-slate-300">Instagram</a>
+      <button type="button" id="admin-logout" class="ml-auto text-slate-500 hover:text-brand">Salir</button>
+    </nav>
+    <slot />
+  </div>
+</BaseLayout>
+
+<script>
+  import { apiFetch } from "../lib/api";
+
+  async function guard() {
+    if (window.location.pathname.startsWith("/admin/login")) return;
+    const res = await apiFetch("/api/auth/me", {
+      credentials: "include",
+    });
+    const data = await res.json();
+    if (!data.user) {
+      window.location.href = "/admin/login";
+    }
+  }
+
+  async function logout() {
+    await apiFetch("/api/auth/logout", { method: "POST" });
+    sessionStorage.removeItem("cmp_token");
+    window.location.href = "/admin/login";
+  }
+
+  guard();
+
+  document.getElementById("admin-logout")?.addEventListener("click", logout);
+</script>
