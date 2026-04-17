@@ -81,7 +81,7 @@ El cron (`0 */6 * * *` en `wrangler.toml`) refresca la caché en D1; en el panel
 | **Worker** | `META_ACCESS_TOKEN` | Secret | Token Meta (Instagram Graph), si usas feed |
 | **Worker** | `INSTAGRAM_USER_ID` | Secret | ID numérico de la cuenta Instagram Business |
 
-Si `PUBLIC_API_URL` no está en Pages, el sitio intentará llamar a `/api` en el mismo dominio de Pages y fallará (no existe el Worker ahí). Si `CORS_ORIGIN` no incluye la URL exacta de tu Pages (o falta `https://`), el navegador bloqueará las peticiones al API.
+Si `PUBLIC_API_URL` no está en Pages, el sitio intentará llamar a `/api` en el mismo dominio de Pages y fallará (no existe el Worker ahí). Si `CORS_ORIGIN` no coincide **exactamente** con el origen del navegador (`https://` + host, **sin** `/` al final; mismo host que ves en la barra de direcciones, incluido `www` si lo usas), el navegador bloqueará las peticiones (error de red en el login). Tras cambiar variables en Pages, haz un **nuevo despliegue** para que el HTML incluya `PUBLIC_API_URL`.
 
 Desarrollo local: copia [`apps/api/.dev.vars.example`](apps/api/.dev.vars.example) a `apps/api/.dev.vars` y ajusta (no se sube a git).
 

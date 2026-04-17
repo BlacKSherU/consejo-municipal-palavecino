@@ -14,22 +14,30 @@ type Variables = {
 
 const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
+function normalizeOrigin(o: string): string {
+  return o.trim().replace(/\/$/, "");
+}
+
+/** Orígenes permitidos (sin barra final). Si CORS_ORIGIN está vacío en producción, solo localhost. */
 function corsOrigins(env: Env): string[] {
   const raw = env.CORS_ORIGIN?.trim();
   if (!raw) return ["http://localhost:4321", "http://127.0.0.1:4321"];
-  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+  return raw.split(",").map((s) => normalizeOrigin(s)).filter(Boolean);
 }
 
 app.use("*", async (c, next) => {
-  const origins = corsOrigins(c.env);
+  const allowed = corsOrigins(c.env);
   return cors({
     origin: (origin) => {
-      if (!origin) return origins[0] ?? "*";
-      return origins.includes(origin) ? origin : origins[0] ?? origin;
+      if (!origin) return allowed[0] ?? "";
+      const o = normalizeOrigin(origin);
+      if (allowed.includes(o)) return origin;
+      return false;
     },
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "Cookie"],
+    allowHeaders: ["Content-Type", "Authorization", "Cookie", "X-Requested-With"],
     credentials: true,
+    maxAge: 86400,
   })(c, next);
 });
 

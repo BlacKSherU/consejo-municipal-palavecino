@@ -3,6 +3,23 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
 ---
 
 <AdminLoginLayout>
+  <div
+    id="login-diag"
+    class="mb-6 rounded-lg border border-slate-600 bg-slate-800/50 px-3 py-3 text-left text-xs leading-relaxed text-slate-400"
+  >
+    <p class="font-semibold text-slate-300">Conexión al API</p>
+    <p id="login-api-url" class="mt-1 break-all font-mono text-[11px] text-slate-500">…</p>
+    <p id="login-api-warn" class="mt-2 hidden text-amber-400"></p>
+    <button
+      type="button"
+      id="login-test-api"
+      class="mt-3 w-full rounded-lg border border-slate-600 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-700"
+    >
+      Probar conexión (/health)
+    </button>
+    <p id="login-test-result" class="mt-2 hidden text-[11px]"></p>
+  </div>
+
   <form id="login-form" class="space-y-4">
     <div>
       <label class="block text-sm font-medium text-slate-300">Correo</label>
@@ -35,7 +52,51 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
 </AdminLoginLayout>
 
 <script>
-  import { apiUrl, apiFetch } from "../../lib/api";
+  import { apiUrl, apiFetch, getApiBase } from "../../lib/api";
+
+  function renderDiag() {
+    const base = getApiBase();
+    const urlEl = document.getElementById("login-api-url");
+    const warnEl = document.getElementById("login-api-warn");
+    if (urlEl) {
+      urlEl.textContent = base
+        ? base
+        : "(vacío) — las peticiones van a este mismo dominio. Si el Worker está en otro host, configura PUBLIC_API_URL en Cloudflare Pages y vuelve a desplegar.";
+    }
+    const host = window.location.hostname;
+    if (warnEl && (host.endsWith(".pages.dev") || host.endsWith(".pages.cloudflare.com")) && !base) {
+      warnEl.classList.remove("hidden");
+      warnEl.textContent =
+        "PUBLIC_API_URL no está en el build. Ve a Pages → Settings → Variables → Production y añade PUBLIC_API_URL = https://tu-worker.workers.dev (sin / al final), luego redespiega.";
+    }
+  }
+
+  renderDiag();
+
+  document.getElementById("login-test-api")?.addEventListener("click", async () => {
+    const out = document.getElementById("login-test-result");
+    if (!out) return;
+    out.classList.remove("hidden");
+    out.textContent = "Probando…";
+    const url = apiUrl("/health");
+    try {
+      const res = await fetch(url, { method: "GET", mode: "cors" });
+      const text = await res.text();
+      let body = text;
+      try {
+        body = JSON.stringify(JSON.parse(text));
+      } catch {
+        /* ok */
+      }
+      out.className =
+        "mt-2 text-[11px] " + (res.ok ? "text-emerald-400" : "text-amber-400");
+      out.textContent = `${res.status} ${res.statusText} · ${url} → ${body.slice(0, 120)}`;
+    } catch (e) {
+      out.className = "mt-2 text-[11px] text-red-400";
+      out.textContent =
+        `Fallo: ${e instanceof Error ? e.message : String(e)}. URL: ${url}. Si es CORS, en el Worker define CORS_ORIGIN exactamente como https://${window.location.host} (sin barra final).`;
+    }
+  });
 
   (async function redirectIfLoggedIn() {
     const token = sessionStorage.getItem("cmp_token");
@@ -57,22 +118,38 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
     const email = String(fd.get("email") || "");
     const password = String(fd.get("password") || "");
     if (err) err.textContent = "";
+    const loginUrl = apiUrl("/api/auth/login");
     try {
-      const res = await fetch(apiUrl("/api/auth/login"), {
+      const res = await fetch(loginUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
+      let data: { error?: string; token?: string } = {};
+      const raw = await res.text();
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        if (err)
+          err.textContent = `Respuesta no JSON (${res.status}). ¿URL correcta? ${loginUrl.slice(0, 80)}…`;
+        return;
+      }
       if (!res.ok) {
-        if (err) err.textContent = data.error || "Error de acceso";
+        if (err) err.textContent = data.error || `Error ${res.status} al iniciar sesión`;
         return;
       }
       if (data.token) sessionStorage.setItem("cmp_token", data.token);
       window.location.href = "/gestion-cmp";
-    } catch {
-      if (err) err.textContent = "Error de red. Comprueba PUBLIC_API_URL y CORS.";
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (err) {
+        err.innerHTML = [
+          `<strong>Error de red / CORS</strong> (${msg}).`,
+          `URL intentada: <code class="break-all text-[11px]">${loginUrl}</code>`,
+          `<br />Comprueba: (1) PUBLIC_API_URL en Pages = URL del Worker sin / final; (2) en el Worker, variable CORS_ORIGIN = <code>https://${window.location.host}</code> (mismo protocolo y host que esta página).`,
+        ].join(" ");
+      }
     }
   });
 </script>
