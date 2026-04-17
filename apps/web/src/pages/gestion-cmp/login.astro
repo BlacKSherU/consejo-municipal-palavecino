@@ -131,12 +131,34 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
       try {
         data = raw ? JSON.parse(raw) : {};
       } catch {
-        if (err)
-          err.textContent = `Respuesta no JSON (${res.status}). ¿URL correcta? ${loginUrl.slice(0, 80)}…`;
+        if (err) {
+          const base = getApiBase();
+          if ((res.status === 405 || res.status === 404) && !base) {
+            err.innerHTML = [
+              `<strong>Error ${res.status}</strong> (respuesta no JSON): suele indicar que el POST fue a Pages sin API.`,
+              ` Configura <code class="text-[11px]">PUBLIC_API_URL</code> en el build de Pages con la URL del Worker y redespiega.`,
+            ].join("");
+          } else {
+            err.textContent = `Respuesta no JSON (${res.status}). ¿URL correcta? ${loginUrl.slice(0, 80)}…`;
+          }
+        }
         return;
       }
       if (!res.ok) {
-        if (err) err.textContent = data.error || `Error ${res.status} al iniciar sesión`;
+        if (err) {
+          const base = getApiBase();
+          if ((res.status === 405 || res.status === 404) && !base) {
+            err.innerHTML = [
+              `<strong>Error ${res.status}</strong>: el navegador envió el login a <code class="text-[11px]">${window.location.origin}/api/…</code> (este sitio en Pages no tiene el API).`,
+              ` En Cloudflare Pages → Settings → Environment variables → Production, define <code class="text-[11px]">PUBLIC_API_URL</code> = la URL de tu Worker (https://…workers.dev, sin / al final) y vuelve a desplegar.`,
+            ].join("");
+          } else if (res.status === 405 && base) {
+            err.textContent =
+              "Error 405: el servidor no acepta POST en /api/auth/login. Comprueba que PUBLIC_API_URL apunta al Worker correcto.";
+          } else {
+            err.textContent = data.error || `Error ${res.status} al iniciar sesión`;
+          }
+        }
         return;
       }
       if (data.token) sessionStorage.setItem("cmp_token", data.token);

@@ -45,16 +45,20 @@ Genera el SQL de inserción (hash compatible con el Worker):
 
 ```bash
 cd apps/api
-node scripts/seed-admin.mjs tu@email.com tu_contraseña
+node scripts/seed-admin.mjs tu@email.com tu_contraseña --write
 ```
 
-Ejecuta la sentencia `INSERT` impresa contra la base local:
+Eso crea `seed-admin.sql` (ignorado por git). Aplícalo a la base:
 
 ```bash
-npx wrangler d1 execute cmp-db --local --command "INSERT INTO admin_users ..."
+# Producción (remota)
+npx wrangler d1 execute cmp-db --remote --file=seed-admin.sql
+
+# Solo local
+npx wrangler d1 execute cmp-db --local --file=seed-admin.sql
 ```
 
-(Asegúrate de escapar comillas según tu shell o usa un archivo `.sql`.)
+Sin `--write`, el script solo imprime el SQL en la consola (tendrías que guardarlo tú en un `.sql`).
 
 ### Instagram (Meta)
 

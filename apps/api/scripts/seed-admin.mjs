@@ -1,12 +1,14 @@
 /**
- * Creates an admin user in local D1. Usage:
- *   node scripts/seed-admin.mjs you@example.com yourpassword
- * Then: wrangler d1 execute cmp-db --local --command "INSERT INTO admin_users ..."
- * Or pipe SQL from this script.
+ * Genera el INSERT para un usuario admin (hash PBKDF2 compatible con el Worker).
  *
- * Prints SQL for: INSERT INTO admin_users (email, password_record) VALUES (...);
+ * Uso:
+ *   node scripts/seed-admin.mjs tu@email.com tu_contraseña
+ *   node scripts/seed-admin.mjs tu@email.com tu_contraseña --write
+ *
+ * Con --write crea seed-admin.sql en el directorio actual (listo para wrangler).
  */
 import { pbkdf2Sync, randomBytes } from "node:crypto";
+import { writeFileSync } from "node:fs";
 
 const ITERATIONS = 100_000;
 const SALT_LEN = 16;
@@ -22,9 +24,25 @@ function hashPassword(plain) {
   return `pbkdf2:${ITERATIONS}:${toB64(salt)}:${toB64(hash)}`;
 }
 
-const email = (process.argv[2] || "admin@example.com").trim().toLowerCase();
-const password = process.argv[3] || "admin123";
+const args = process.argv.slice(2).filter((a) => a !== "--write");
+const writeFile = process.argv.includes("--write");
+
+const email = (args[0] || "admin@example.com").trim().toLowerCase();
+const password = args[1] || "admin123";
 const record = hashPassword(password);
 const sql = `INSERT INTO admin_users (email, password_record) VALUES ('${email.replace(/'/g, "''")}', '${record.replace(/'/g, "''")}');`;
-console.log("-- Run against your D1 database:\n");
+
+console.log("-- SQL generado:\n");
 console.log(sql);
+console.log("");
+
+if (writeFile) {
+  const out = "seed-admin.sql";
+  writeFileSync(out, sql + "\n", "utf8");
+  console.log(`Escrito en ${out}`);
+  console.log("  npx wrangler d1 execute cmp-db --remote --file=seed-admin.sql");
+  console.log("  npx wrangler d1 execute cmp-db --local --file=seed-admin.sql");
+} else {
+  console.log('Opcional: añade --write para crear seed-admin.sql y ejecutar con:');
+  console.log("  npx wrangler d1 execute cmp-db --remote --file=seed-admin.sql");
+}
