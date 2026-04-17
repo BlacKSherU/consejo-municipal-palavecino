@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import { getPublicApiUrlForBuild } from "../lib/api";
 
 interface Props {
   title?: string;
@@ -26,7 +27,7 @@ function linkActive(href: string, panelOnly?: boolean): boolean {
   return pathNorm === href || pathNorm.startsWith(href + "/");
 }
 
-const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
+const apiBase = getPublicApiUrlForBuild();
 ---
 
 <!doctype html>

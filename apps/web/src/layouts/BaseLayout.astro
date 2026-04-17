@@ -1,5 +1,8 @@
 ---
 import "../styles/global.css";
+import { getPublicApiUrlForBuild } from "../lib/api";
+
+const apiBaseForMeta = getPublicApiUrlForBuild();
 
 interface Props {
   title?: string;
@@ -25,7 +28,7 @@ const nav = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="cmp-api-base" content={import.meta.env.PUBLIC_API_URL ?? ""} />
+    <meta name="cmp-api-base" content={apiBaseForMeta} />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
