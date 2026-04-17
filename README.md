@@ -107,9 +107,13 @@ Así solo se instalan dependencias de Astro y la salida es `apps/web/dist`.
 |--------|--------|
 | **Root directory** | `/` (vacío o `.`) |
 | **Build command** | `npm install && npm run build` |
-| **Build output directory** | `apps/web/dist` |
+| **Build output directory** | `apps/web/dist` (**no** pongas solo `dist`: Astro escribe ahí y en la raíz no existe `dist`) |
 
 El `package.json` de la raíz debe tener el script `build` que ejecuta el workspace `@cmp/web` (como en este repo).
+
+En la raíz del repo hay un [`wrangler.toml`](wrangler.toml) con `pages_build_output_dir = "apps/web/dist"` para que Cloudflare Pages detecte la carpeta correcta tras el build. Si el dashboard sigue pidiendo la ruta a mano, debe coincidir con **`apps/web/dist`**.
+
+**Error habitual:** `Output directory "dist" not found` — ocurre cuando el build corre en la raíz pero la salida de Astro está en `apps/web/dist`. Solución: **Build output directory** = `apps/web/dist`, o usa la **opción A** (root `apps/web` y salida `dist`).
 
 **Variables de entorno (Production):**
 

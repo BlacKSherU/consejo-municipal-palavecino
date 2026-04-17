@@ -1,0 +1,7 @@
+# Cloudflare Pages (build desde la raíz del monorepo con `npm run build`).
+# Tras el build, Astro escribe en apps/web/dist — Pages debe usar esa ruta como salida.
+# El Worker de la API sigue desplegándose solo desde apps/api (su propio wrangler.toml).
+
+name = "consejo-municipal-palavecino-site"
+compatibility_date = "2024-11-01"
+pages_build_output_dir = "apps/web/dist"
