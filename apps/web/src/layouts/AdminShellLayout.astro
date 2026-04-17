@@ -1,0 +1,177 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Administración" } = Astro.props;
+const rawPath = Astro.url.pathname;
+const pathNorm = rawPath.replace(/\/$/, "") || "/";
+
+/** Ruta pública del panel (no enlazada en el sitio). */
+const BASE = "/gestion-cmp";
+
+const navItems: { href: string; label: string; panelOnly?: boolean }[] = [
+  { href: `${BASE}`, label: "Panel", panelOnly: true },
+  { href: `${BASE}/noticias`, label: "Noticias" },
+  { href: `${BASE}/quienes-somos`, label: "Quiénes somos" },
+  { href: `${BASE}/consejo`, label: "Consejo" },
+  { href: `${BASE}/gacetas`, label: "Gacetas" },
+  { href: `${BASE}/instagram`, label: "Instagram" },
+];
+
+function linkActive(href: string, panelOnly?: boolean): boolean {
+  if (panelOnly) return pathNorm === BASE;
+  return pathNorm === href || pathNorm.startsWith(href + "/");
+}
+
+const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
+---
+
+<!doctype html>
+<html lang="es" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="cmp-api-base" content={apiBase} />
+    <title>{title} — Admin CMP</title>
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline define:vars={{ apiBase }}>
+      window.__CMP_API_BASE__ = apiBase || "";
+    </script>
+  </head>
+  <body class="min-h-full bg-slate-100 font-sans text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
+    <div
+      id="admin-gate"
+      class="fixed inset-0 z-[200] flex flex-col items-center justify-center gap-3 bg-slate-900 text-white"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="h-10 w-10 animate-spin rounded-full border-2 border-brand-muted border-t-white"></div>
+      <p class="text-sm text-slate-300">Verificando sesión…</p>
+    </div>
+
+    <div id="admin-shell" class="hidden min-h-screen flex flex-col md:flex-row">
+      <aside
+        class="flex w-full shrink-0 flex-col border-b border-slate-800 bg-slate-900 text-slate-200 md:w-64 md:border-b-0 md:border-r"
+        aria-label="Secciones administración"
+      >
+        <div class="border-b border-slate-800 px-4 py-5">
+          <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Consejo Palavecino</p>
+          <p class="mt-1 text-sm font-bold text-white">Administración</p>
+        </div>
+        <nav class="flex flex-1 flex-col gap-0.5 p-3">
+          {
+            navItems.map((item) => (
+              <a
+                href={item.href}
+                class:list={[
+                  "rounded-lg px-3 py-2.5 text-sm font-medium transition",
+                  linkActive(item.href, item.panelOnly)
+                    ? "bg-brand/25 text-white ring-1 ring-brand/40"
+                    : "text-slate-400 hover:bg-slate-800 hover:text-white",
+                ]}
+              >
+                {item.label}
+              </a>
+            ))
+          }
+        </nav>
+        <div class="border-t border-slate-800 p-3">
+          <button
+            type="button"
+            id="admin-logout"
+            class="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-slate-400 transition hover:bg-slate-800 hover:text-white"
+          >
+            Cerrar sesión
+          </button>
+          <a
+            href="/"
+            class="mt-2 block rounded-lg px-3 py-2 text-xs text-slate-500 hover:text-slate-300"
+          >
+            ← Volver al sitio público
+          </a>
+        </div>
+      </aside>
+
+      <div class="flex min-w-0 flex-1 flex-col">
+        <header
+          class="border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900/80"
+        >
+          <h1 class="text-lg font-semibold text-slate-900 dark:text-white">{title}</h1>
+        </header>
+        <main class="flex-1 overflow-auto bg-slate-50 px-6 py-8 dark:bg-slate-950">
+          <slot />
+        </main>
+      </div>
+    </div>
+
+    <div
+      id="admin-denied"
+      class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-slate-900 p-6 text-center text-white"
+    >
+      <div>
+        <p class="text-lg font-semibold">Acceso no autorizado</p>
+        <p class="mt-2 text-sm text-slate-400">Redirigiendo al inicio de sesión…</p>
+      </div>
+    </div>
+
+    <script>
+      import { apiFetch, getApiBase, apiUrl } from "../lib/api";
+
+      async function init() {
+        const gate = document.getElementById("admin-gate");
+        const shell = document.getElementById("admin-shell");
+        const denied = document.getElementById("admin-denied");
+
+        try {
+          const res = await apiFetch("/api/auth/me");
+          const data = await res.json();
+          if (!data.user) {
+            gate?.classList.add("hidden");
+            denied?.classList.remove("hidden");
+            window.location.replace("/gestion-cmp/login");
+            return;
+          }
+        } catch {
+          gate?.classList.add("hidden");
+          denied?.classList.remove("hidden");
+          window.location.replace("/gestion-cmp/login");
+          return;
+        }
+
+        gate?.classList.add("hidden");
+        shell?.classList.remove("hidden");
+
+        document.getElementById("admin-logout")?.addEventListener("click", async () => {
+          await apiFetch("/api/auth/logout", { method: "POST" });
+          sessionStorage.removeItem("cmp_token");
+          window.location.href = "/gestion-cmp/login";
+        });
+
+        const statusEl = document.getElementById("admin-api-status");
+        if (statusEl) {
+          const base = getApiBase() || "(mismo origen — proxy /api)";
+          try {
+            const r = await fetch(apiUrl("/health"));
+            statusEl.innerHTML = r.ok
+              ? `<span class="text-emerald-600 dark:text-emerald-400">API en línea</span> · <code class="text-xs opacity-80">${base}</code>`
+              : `<span class="text-amber-600">API respondió con error</span> · <code class="text-xs">${base}</code>`;
+          } catch {
+            statusEl.innerHTML = `<span class="text-red-600 dark:text-red-400">No se pudo conectar al API</span> · <code class="text-xs break-all">${base}</code> · Configura PUBLIC_API_URL en Cloudflare Pages y CORS_ORIGIN en el Worker.`;
+          }
+        }
+      }
+
+      init();
+    </script>
+  </body>
+</html>

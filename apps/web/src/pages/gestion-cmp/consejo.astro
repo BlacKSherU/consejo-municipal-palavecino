@@ -1,8 +1,8 @@
 ---
-import AdminLayout from "../../layouts/AdminLayout.astro";
+import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
 ---
 
-<AdminLayout title="Consejo">
+<AdminShellLayout title="Consejo">
   <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Puestos y consejales</h1>
 
   <section class="mt-8 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900">
@@ -52,7 +52,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
     <h2 class="text-lg font-semibold">Consejales</h2>
     <div id="mem-list" class="mt-4 space-y-6"></div>
   </section>
-</AdminLayout>
+</AdminShellLayout>
 
 <script>
   import { apiFetch } from "../../lib/api";

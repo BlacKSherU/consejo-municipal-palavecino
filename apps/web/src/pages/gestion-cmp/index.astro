@@ -1,0 +1,57 @@
+---
+import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
+---
+
+<AdminShellLayout title="Panel">
+  <div
+    id="admin-api-status"
+    class="mb-6 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900"
+  >
+    Comprobando conexión con el API…
+  </div>
+  <p class="text-slate-600 dark:text-slate-400">
+    Use el menú lateral para editar por secciones: noticias, texto institucional, consejo, gacetas e Instagram.
+  </p>
+  <ul class="mt-6 grid gap-3 sm:grid-cols-2">
+    <li>
+      <a
+        href="/gestion-cmp/noticias"
+        class="block rounded-xl border border-slate-200 bg-white p-4 text-sm font-medium text-brand shadow-sm transition hover:border-brand/40 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-brand/50"
+      >
+        Noticias
+      </a>
+    </li>
+    <li>
+      <a
+        href="/gestion-cmp/quienes-somos"
+        class="block rounded-xl border border-slate-200 bg-white p-4 text-sm font-medium text-brand shadow-sm transition hover:border-brand/40 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-brand/50"
+      >
+        Quiénes somos
+      </a>
+    </li>
+    <li>
+      <a
+        href="/gestion-cmp/consejo"
+        class="block rounded-xl border border-slate-200 bg-white p-4 text-sm font-medium text-brand shadow-sm transition hover:border-brand/40 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-brand/50"
+      >
+        Consejo
+      </a>
+    </li>
+    <li>
+      <a
+        href="/gestion-cmp/gacetas"
+        class="block rounded-xl border border-slate-200 bg-white p-4 text-sm font-medium text-brand shadow-sm transition hover:border-brand/40 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-brand/50"
+      >
+        Gacetas
+      </a>
+    </li>
+    <li>
+      <a
+        href="/gestion-cmp/instagram"
+        class="block rounded-xl border border-slate-200 bg-white p-4 text-sm font-medium text-brand shadow-sm transition hover:border-brand/40 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-brand/50"
+      >
+        Instagram
+      </a>
+    </li>
+  </ul>
+</AdminShellLayout>

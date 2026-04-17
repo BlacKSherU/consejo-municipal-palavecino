@@ -1,8 +1,8 @@
 ---
-import AdminLayout from "../../layouts/AdminLayout.astro";
+import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
 ---
 
-<AdminLayout title="Quiénes somos">
+<AdminShellLayout title="Quiénes somos">
   <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Quiénes somos</h1>
   <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Markdown. Visible en la página pública.</p>
   <form id="about-form" class="mt-6 space-y-4">
@@ -15,7 +15,7 @@ import AdminLayout from "../../layouts/AdminLayout.astro";
     <p id="about-msg" class="text-sm text-green-700 dark:text-green-400"></p>
     <button type="submit" class="rounded-xl bg-brand px-6 py-2 text-sm font-semibold text-white">Guardar</button>
   </form>
-</AdminLayout>
+</AdminShellLayout>
 
 <script>
   import { apiFetch } from "../../lib/api";

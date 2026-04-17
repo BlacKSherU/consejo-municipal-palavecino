@@ -25,6 +25,7 @@ const nav = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="cmp-api-base" content={import.meta.env.PUBLIC_API_URL ?? ""} />
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
@@ -94,12 +95,6 @@ const nav = [
               </a>
             ))
           }
-          <a
-            href="/admin"
-            class="rounded-lg px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-brand dark:text-slate-400"
-          >
-            Admin
-          </a>
           <button
             type="button"
             id="theme-toggle"

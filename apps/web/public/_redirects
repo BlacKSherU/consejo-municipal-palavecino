@@ -1,0 +1,4 @@
+# Rutas antiguas /admin → panel actual /gestion-cmp
+/admin   /gestion-cmp   301
+/admin/  /gestion-cmp   301
+/admin/* /gestion-cmp/:splat 301

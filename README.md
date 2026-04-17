@@ -9,7 +9,7 @@ Portal institucional en **Astro** (Cloudflare Pages) y **API REST** en **Cloudfl
 
 ## Estructura del monorepo
 
-- [`apps/web`](apps/web): sitio público y panel `/admin` (Astro + Tailwind).
+- [`apps/web`](apps/web): sitio público y panel interno en **`/gestion-cmp`** (Astro + Tailwind, sin enlace en el menú público).
 - [`apps/api`](apps/api): Worker con rutas `/api/*`.
 
 ## Desarrollo local
@@ -67,17 +67,30 @@ npx wrangler d1 execute cmp-db --local --command "INSERT INTO admin_users ..."
    npx wrangler secret put INSTAGRAM_USER_ID
    ```
 
-El cron (`0 */6 * * *` en `wrangler.toml`) refresca la caché en D1; el panel **Admin → Instagram** permite forzar una actualización.
+El cron (`0 */6 * * *` en `wrangler.toml`) refresca la caché en D1; en el panel (**Gestión CMP → Instagram**) puedes forzar una actualización.
 
 ## Despliegue en Cloudflare
+
+### Checklist: variables y secretos
+
+| Dónde | Nombre | Tipo | Valor |
+|--------|--------|------|--------|
+| **Pages** (build) | `PUBLIC_API_URL` | Variable | `https://TU-WORKER.workers.dev` (sin `/` final) |
+| **Worker** | `CORS_ORIGIN` | Variable | `https://TU-SITIO.pages.dev` (o tu dominio; con `https://`) |
+| **Worker** | `JWT_SECRET` | Secret | Cadena larga aleatoria (`openssl rand -base64 48`) |
+| **Worker** | `META_ACCESS_TOKEN` | Secret | Token Meta (Instagram Graph), si usas feed |
+| **Worker** | `INSTAGRAM_USER_ID` | Secret | ID numérico de la cuenta Instagram Business |
+
+Si `PUBLIC_API_URL` no está en Pages, el sitio intentará llamar a `/api` en el mismo dominio de Pages y fallará (no existe el Worker ahí). Si `CORS_ORIGIN` no incluye la URL exacta de tu Pages (o falta `https://`), el navegador bloqueará las peticiones al API.
+
+Desarrollo local: copia [`apps/api/.dev.vars.example`](apps/api/.dev.vars.example) a `apps/api/.dev.vars` y ajusta (no se sube a git).
 
 ### Worker (API)
 
 1. Crea base **D1** y bucket **R2** en el dashboard o con Wrangler.
 2. Copia el `database_id` real en [`apps/api/wrangler.toml`](apps/api/wrangler.toml) y el nombre del bucket.
-3. Configura secretos: `JWT_SECRET`, `META_ACCESS_TOKEN`, `INSTAGRAM_USER_ID`.
-4. Variable opcional `CORS_ORIGIN`: lista separada por comas con el origen del sitio Pages (por ejemplo `https://cmp.pages.dev`).
-5. Despliega:
+3. En el Worker (dashboard o `wrangler secret put` / Variables): configura la tabla anterior.
+4. Despliega:
 
    ```bash
    cd apps/api
@@ -115,11 +128,11 @@ En la raíz del repo hay un [`wrangler.toml`](wrangler.toml) con `pages_build_ou
 
 **Error habitual:** `Output directory "dist" not found` — ocurre cuando el build corre en la raíz pero la salida de Astro está en `apps/web/dist`. Solución: **Build output directory** = `apps/web/dist`, o usa la **opción A** (root `apps/web` y salida `dist`).
 
-**Variables de entorno (Production):**
+**Variables de entorno (Production) en Pages:**
 
-- **`PUBLIC_API_URL`**: URL del Worker, **sin** barra final, p. ej. `https://cmp-api.xxx.workers.dev`. Vacía solo si el HTML y `/api` sirven desde el **mismo origen** (mismo dominio).
+- **`PUBLIC_API_URL`**: URL del Worker, **sin** barra final. Obligatoria si el sitio y el API están en dominios distintos (caso habitual).
 
-**CORS:** en el Worker, define `CORS_ORIGIN` con la URL del sitio Pages (p. ej. `https://tu-proyecto.pages.dev`) para que el navegador pueda llamar al API desde otro dominio.
+**Panel de gestión:** ruta **`/gestion-cmp`** (login en **`/gestion-cmp/login`**). No está enlazado en el sitio público. Las rutas antiguas `/admin` redirigen a `/gestion-cmp` (ver [`apps/web/public/_redirects`](apps/web/public/_redirects)).
 
 ## Licencia y créditos
 

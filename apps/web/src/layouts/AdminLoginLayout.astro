@@ -1,0 +1,46 @@
+---
+import "../styles/global.css";
+
+const apiBase = import.meta.env.PUBLIC_API_URL ?? "";
+---
+
+<!doctype html>
+<html lang="es" class="h-full">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="cmp-api-base" content={apiBase} />
+    <title>Acceso administración — CMP Palavecino</title>
+    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline define:vars={{ apiBase }}>
+      window.__CMP_API_BASE__ = apiBase || "";
+    </script>
+  </head>
+  <body
+    class="min-h-full bg-gradient-to-br from-slate-900 via-slate-900 to-brand/20 font-sans text-slate-100 antialiased"
+  >
+    <div class="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4 py-12">
+      <div class="rounded-2xl border border-slate-700/80 bg-slate-900/90 p-8 shadow-2xl backdrop-blur">
+        <div class="mb-8 text-center">
+          <img src="/logo.svg" alt="" class="mx-auto h-14 w-14" width="56" height="56" />
+          <p class="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Consejo Municipal Palavecino
+          </p>
+          <h1 class="mt-2 text-xl font-bold text-white">Panel de administración</h1>
+          <p class="mt-1 text-sm text-slate-400">Acceso restringido al personal autorizado.</p>
+        </div>
+        <slot />
+        <p class="mt-8 text-center">
+          <a href="/" class="text-sm text-slate-500 hover:text-slate-300">← Volver al sitio público</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

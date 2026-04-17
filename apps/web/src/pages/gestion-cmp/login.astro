@@ -1,0 +1,78 @@
+---
+import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
+---
+
+<AdminLoginLayout>
+  <form id="login-form" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-slate-300">Correo</label>
+      <input
+        name="email"
+        type="email"
+        required
+        autocomplete="username"
+        class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-800/80 px-3 py-2.5 text-white placeholder-slate-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+      />
+    </div>
+    <div>
+      <label class="block text-sm font-medium text-slate-300">Contraseña</label>
+      <input
+        name="password"
+        type="password"
+        required
+        autocomplete="current-password"
+        class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-800/80 px-3 py-2.5 text-white placeholder-slate-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+      />
+    </div>
+    <p id="login-err" class="text-sm text-red-400"></p>
+    <button
+      type="submit"
+      class="w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark"
+    >
+      Entrar
+    </button>
+  </form>
+</AdminLoginLayout>
+
+<script>
+  import { apiUrl, apiFetch } from "../../lib/api";
+
+  (async function redirectIfLoggedIn() {
+    const token = sessionStorage.getItem("cmp_token");
+    if (!token) return;
+    try {
+      const res = await apiFetch("/api/auth/me");
+      const data = await res.json();
+      if (data.user) window.location.replace("/gestion-cmp");
+    } catch {
+      sessionStorage.removeItem("cmp_token");
+    }
+  })();
+
+  document.getElementById("login-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const err = document.getElementById("login-err");
+    const fd = new FormData(form);
+    const email = String(fd.get("email") || "");
+    const password = String(fd.get("password") || "");
+    if (err) err.textContent = "";
+    try {
+      const res = await fetch(apiUrl("/api/auth/login"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (err) err.textContent = data.error || "Error de acceso";
+        return;
+      }
+      if (data.token) sessionStorage.setItem("cmp_token", data.token);
+      window.location.href = "/gestion-cmp";
+    } catch {
+      if (err) err.textContent = "Error de red. Comprueba PUBLIC_API_URL y CORS.";
+    }
+  });
+</script>
