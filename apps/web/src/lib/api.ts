@@ -8,13 +8,29 @@ export const DEFAULT_PUBLIC_API_BASE = "https://cmp-api.tramitesgarciamiguel.wor
 export function getPublicApiUrlForBuild(): string {
   const fromEnv = (import.meta.env.PUBLIC_API_URL ?? "").trim().replace(/\/$/, "");
   if (fromEnv) return fromEnv;
-  if (import.meta.env.DEV) return "";
+  // En el cliente, no fiarse solo de import.meta: usar !PROD (build de producción).
+  if (!import.meta.env.PROD) return "";
   return DEFAULT_PUBLIC_API_BASE;
 }
 
-/** Resuelve la base del API: meta (HTML), variable global o env de build. */
+function readEmbeddedApiBaseFromDom(): string {
+  const el = document.getElementById("cmp-api-config");
+  if (!el?.textContent?.trim()) return "";
+  try {
+    const j = JSON.parse(el.textContent) as { base?: string };
+    return String(j.base ?? "")
+      .trim()
+      .replace(/\/$/, "");
+  } catch {
+    return "";
+  }
+}
+
+/** Resuelve la base del API: JSON embebido en el HTML (build), meta, global o env. */
 export function getApiBase(): string {
   if (typeof document !== "undefined") {
+    const embedded = readEmbeddedApiBaseFromDom();
+    if (embedded) return embedded;
     const w = window as unknown as { __CMP_API_BASE__?: string };
     if (typeof w.__CMP_API_BASE__ === "string" && w.__CMP_API_BASE__.trim()) {
       return w.__CMP_API_BASE__.trim().replace(/\/$/, "");

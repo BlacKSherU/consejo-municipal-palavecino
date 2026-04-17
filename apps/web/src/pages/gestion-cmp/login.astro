@@ -61,13 +61,13 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
     if (urlEl) {
       urlEl.textContent = base
         ? base
-        : "(vacío) — las peticiones van a este mismo dominio. Si el Worker está en otro host, configura PUBLIC_API_URL en Cloudflare Pages y vuelve a desplegar.";
+        : "(sin base) — las peticiones a /api van a este mismo dominio (Pages). Fuerza recarga (Ctrl+F5) o despliega el último build; el proyecto ya incluye la URL del Worker en el HTML.";
     }
     const host = window.location.hostname;
     if (warnEl && (host.endsWith(".pages.dev") || host.endsWith(".pages.cloudflare.com")) && !base) {
       warnEl.classList.remove("hidden");
       warnEl.textContent =
-        "PUBLIC_API_URL no está en el build. Ve a Pages → Settings → Variables → Production y añade PUBLIC_API_URL = https://tu-worker.workers.dev (sin / al final), luego redespiega.";
+        "Sigue sin detectarse la base del API en esta página. Comprueba que abres la URL publicada de Pages (no una copia en otro host) y que el despliegue terminó. Opcional en Pages: PUBLIC_API_URL = tu Worker.";
     }
   }
 
@@ -82,15 +82,21 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
     try {
       const res = await fetch(url, { method: "GET", mode: "cors" });
       const text = await res.text();
+      const looksLikeHtml = /^\s*</.test(text);
       let body = text;
       try {
         body = JSON.stringify(JSON.parse(text));
       } catch {
         /* ok */
       }
+      const htmlHint =
+        looksLikeHtml && res.ok
+          ? " · Respuesta HTML (no es /health del Worker): la base del API está vacía o la URL no llega al Worker."
+          : "";
       out.className =
-        "mt-2 text-[11px] " + (res.ok ? "text-emerald-400" : "text-amber-400");
-      out.textContent = `${res.status} ${res.statusText} · ${url} → ${body.slice(0, 120)}`;
+        "mt-2 text-[11px] " +
+        (res.ok && !looksLikeHtml ? "text-emerald-400" : "text-amber-400");
+      out.textContent = `${res.status} ${res.statusText} · ${url} → ${body.slice(0, 120)}${htmlHint}`;
     } catch (e) {
       out.className = "mt-2 text-[11px] text-red-400";
       out.textContent =

@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import ApiBaseEmbed from "../components/ApiBaseEmbed.astro";
 import { getPublicApiUrlForBuild } from "../lib/api";
 
 const apiBase = getPublicApiUrlForBuild();
@@ -12,6 +13,7 @@ const apiBase = getPublicApiUrlForBuild();
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="cmp-api-base" content={apiBase} />
+    <ApiBaseEmbed />
     <title>Acceso administración — CMP Palavecino</title>
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

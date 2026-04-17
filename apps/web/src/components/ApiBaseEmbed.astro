@@ -1,0 +1,7 @@
+---
+import { getPublicApiUrlForBuild } from "../lib/api";
+
+const base = getPublicApiUrlForBuild();
+---
+
+<script type="application/json" id="cmp-api-config" set:html={JSON.stringify({ base })}></script>
