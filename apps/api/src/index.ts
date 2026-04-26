@@ -518,6 +518,9 @@ app.get("/api/gazettes", async (c) => {
   const perPageQ = c.req.query("perPage") ?? c.req.query("per_page");
   const limitQ = c.req.query("limit");
   const offsetQ = c.req.query("offset");
+  const dateFrom = (c.req.query("dateFrom") ?? "").trim();
+  const dateTo = (c.req.query("dateTo") ?? "").trim();
+  const ymd = /^\d{4}-\d{2}-\d{2}$/;
   const hasLimit = limitQ != null && String(limitQ).trim() !== "";
   const wantsPagination =
     (pageQ != null && String(pageQ).trim() !== "") || (perPageQ != null && String(perPageQ).trim() !== "");
@@ -531,6 +534,14 @@ app.get("/api/gazettes", async (c) => {
     whereSql +=
       " AND (title LIKE ? OR issue_number LIKE ? OR file_name LIKE ? OR (published_at IS NOT NULL AND published_at LIKE ?))";
     binds.push(like, like, like, like);
+  }
+  if (ymd.test(dateFrom)) {
+    whereSql += " AND date(published_at) >= ?";
+    binds.push(dateFrom);
+  }
+  if (ymd.test(dateTo)) {
+    whereSql += " AND date(published_at) <= ?";
+    binds.push(dateTo);
   }
 
   const countRow = await c.env.DB

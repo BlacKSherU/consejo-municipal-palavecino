@@ -296,7 +296,7 @@ export function NewsCards({
                 <motion.div layoutId={`card-content-${card.id}`} className="p-6">
                   <motion.h3
                     layoutId={`card-title-${card.id}`}
-                    className="line-clamp-3 text-lg font-semibold leading-tight transition-colors group-hover:text-primary"
+                    className="line-clamp-2 text-lg font-semibold leading-tight transition-colors group-hover:text-primary"
                   >
                     {card.title}
                   </motion.h3>
