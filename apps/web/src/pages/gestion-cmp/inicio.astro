@@ -1,0 +1,10 @@
+---
+import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
+import { AdminInicioIsland } from "../../components/admin/AdminInicioIsland";
+---
+
+<AdminShellLayout title="Página de inicio">
+  <div class="prose-slate min-w-0 text-slate-800 dark:prose-invert dark:text-slate-100">
+    <AdminInicioIsland client:load />
+  </div>
+</AdminShellLayout>

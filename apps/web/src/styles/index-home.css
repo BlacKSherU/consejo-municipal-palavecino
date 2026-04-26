@@ -83,5 +83,5 @@
   @apply text-3xl font-bold tracking-tight text-slate-900 dark:text-white;
 }
 .home-mission-text {
-  @apply mt-4 text-lg text-slate-600 dark:text-slate-300;
+  @apply mt-4 whitespace-pre-line text-lg text-slate-600 dark:text-slate-300;
 }

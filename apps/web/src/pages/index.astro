@@ -12,25 +12,25 @@ import "../styles/index-home.css";
       <div class="home-hero-copy">
         <p class="home-hero-badge">
           <span class="home-hero-dot"></span>
-          Portal institucional
+          <span id="home-hero-badge">Portal institucional</span>
         </p>
         <h1 id="hero-heading" class="home-hero-title">
-          <span class="home-hero-title-gradient">Consejo Municipal Bolivariano</span>
-          <span class="home-hero-title-line">de Palavecino</span>
+          <span id="home-hero-t1" class="home-hero-title-gradient">Consejo Municipal Bolivariano</span>
+          <span id="home-hero-t2" class="home-hero-title-line">de Palavecino</span>
         </h1>
-        <p class="home-hero-lead">
+        <p id="home-hero-lead" class="home-hero-lead">
           Servimos con transparencia, participación y compromiso con el desarrollo local. Conozca nuestro trabajo y
           conéctese con el consejo.
         </p>
         <div class="home-hero-actions">
-          <a href="/noticias" class="home-btn-primary">Noticias</a>
-          <a href="/gacetas" class="home-btn-secondary">Gacetas oficiales</a>
+          <a id="home-btn-noticias" href="/noticias" class="home-btn-primary">Noticias</a>
+          <a id="home-btn-gacetas" href="/gacetas" class="home-btn-secondary">Gacetas oficiales</a>
         </div>
       </div>
       <div class="home-hero-aside">
         <div class="home-hero-card">
           <img src="/logo.svg" alt="" class="home-hero-logo" role="presentation" />
-          <p class="home-hero-card-text">Juntos construimos el futuro de nuestro municipio.</p>
+          <p id="home-hero-card-text" class="home-hero-card-text">Juntos construimos el futuro de nuestro municipio.</p>
         </div>
       </div>
     </div>
@@ -38,8 +38,8 @@ import "../styles/index-home.css";
 
   <section class="home-instagram">
     <div class="home-instagram-inner">
-      <h2 class="home-instagram-h2">Instagram</h2>
-      <p class="home-instagram-lead">Publicaciones recientes (sincronizadas desde la cuenta oficial).</p>
+      <h2 id="home-ig-h2" class="home-instagram-h2">Instagram</h2>
+      <p id="home-ig-lead" class="home-instagram-lead">Publicaciones recientes (sincronizadas desde la cuenta oficial).</p>
       <div id="ig-feed" class="home-ig-grid"></div>
       <p id="ig-status" class="home-ig-status"></p>
     </div>
@@ -48,8 +48,8 @@ import "../styles/index-home.css";
   <section id="mission" class="home-mission">
     <div class="home-mission-inner">
       <div class="home-mission-copy">
-        <h2 class="home-mission-h2">Nuestra misión</h2>
-        <p class="home-mission-text">
+        <h2 id="home-mission-h2" class="home-mission-h2">Nuestra misión</h2>
+        <p id="home-mission-text" class="home-mission-text">
           Ejercer funciones legislativas y de control con integridad, apertura y cercanía con el pueblo, fortaleciendo
           la democracia participativa local.
         </p>
@@ -59,6 +59,8 @@ import "../styles/index-home.css";
 </BaseLayout>
 
 <script>
+  import { initHomePage } from "../scripts/load-home-page";
   import { initInstagramFeed } from "../scripts/load-instagram-feed";
+  void initHomePage();
   initInstagramFeed();
 </script>

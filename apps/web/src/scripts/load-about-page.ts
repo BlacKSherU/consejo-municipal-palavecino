@@ -7,7 +7,6 @@ type Bundle = {
   vision?: string;
   kicker?: string;
   hero?: string;
-  images?: { url?: string; key?: string; alt: string }[];
 };
 
 function clear(el: HTMLElement) {
@@ -74,16 +73,14 @@ export async function initAboutPage(rootId = "about-page-root"): Promise<void> {
       th.className = "text-xl font-bold text-slate-900 dark:text-white";
       th.textContent = title;
       c.appendChild(th);
-      const tp = document.createElement("div");
+      const tp = document.createElement("p");
       tp.className =
-        "prose prose-slate mt-4 max-w-none dark:prose-invert prose-p:mb-3 prose-p:last:mb-0 text-base leading-relaxed text-slate-600 dark:prose-p:text-slate-300";
+        "mt-4 whitespace-pre-line text-base leading-relaxed text-slate-600 dark:text-slate-300";
       if (text.trim()) {
-        tp.innerHTML = marked.parse(text.trim(), { async: false }) as string;
+        tp.textContent = text.trim();
       } else {
-        const ph = document.createElement("p");
-        ph.className = "not-prose";
-        ph.textContent = "Configure este texto en el panel de administración.";
-        tp.appendChild(ph);
+        tp.className = `${tp.className} italic text-slate-500 dark:text-slate-500`;
+        tp.textContent = "Configure este texto en el panel de administración.";
       }
       c.appendChild(tp);
       return c;
@@ -92,49 +89,6 @@ export async function initAboutPage(rootId = "about-page-root"): Promise<void> {
     mv.appendChild(card("Misión", data.mission ?? "", "brand"));
     mv.appendChild(card("Visión", data.vision ?? "", "teal"));
     wrap.appendChild(mv);
-
-    const imgs = Array.isArray(data.images) ? data.images : [];
-    if (imgs.length > 0) {
-      const sec = document.createElement("section");
-      sec.setAttribute("aria-labelledby", "about-gallery-title");
-      const gh = document.createElement("h2");
-      gh.id = "about-gallery-title";
-      gh.className = "text-center text-2xl font-bold text-slate-900 dark:text-white";
-      gh.textContent = "Imágenes";
-      sec.appendChild(gh);
-      const gp = document.createElement("p");
-      gp.className = "mx-auto mt-2 max-w-xl text-center text-sm text-slate-500 dark:text-slate-400";
-      gp.textContent = "Galería de imágenes publicadas desde el panel (almacenamiento en el sitio).";
-      sec.appendChild(gp);
-
-      const grid = document.createElement("div");
-      grid.className = "mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3";
-      for (const im of imgs) {
-        const src = im.key
-          ? apiUrl("/api/site/about/photo?key=" + encodeURIComponent(im.key))
-          : im.url ?? "";
-        if (!src) continue;
-        const fig = document.createElement("figure");
-        fig.className =
-          "group overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-100 shadow-md dark:border-slate-700 dark:bg-slate-800/50";
-        const img = document.createElement("img");
-        img.src = src;
-        img.alt = im.alt || "";
-        img.loading = "lazy";
-        img.className =
-          "aspect-[4/3] h-auto w-full object-cover transition duration-500 group-hover:scale-[1.03]";
-        fig.appendChild(img);
-        if (im.alt) {
-          const cap = document.createElement("figcaption");
-          cap.className = "px-3 py-2 text-center text-xs text-slate-600 dark:text-slate-400";
-          cap.textContent = im.alt;
-          fig.appendChild(cap);
-        }
-        grid.appendChild(fig);
-      }
-      sec.appendChild(grid);
-      wrap.appendChild(sec);
-    }
 
     const article = document.createElement("section");
     article.setAttribute("aria-labelledby", "about-content-title");

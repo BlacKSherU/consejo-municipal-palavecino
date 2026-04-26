@@ -109,7 +109,7 @@ export default function TeamShowcase({ members = [], publicUi }: TeamShowcasePro
                 aria-modal="true"
                 aria-labelledby="council-modal-title"
                 className={cn(
-                  "relative flex max-h-[min(90vh,calc(100dvh-2rem))] w-full flex-col overflow-hidden border border-border bg-card shadow-2xl",
+                  "pointer-events-auto select-text flex max-h-[min(90vh,calc(100dvh-2rem))] w-full flex-col overflow-hidden border border-border bg-card shadow-2xl",
                   resolved.modalRounded,
                   resolved.modalMaxClass,
                 )}

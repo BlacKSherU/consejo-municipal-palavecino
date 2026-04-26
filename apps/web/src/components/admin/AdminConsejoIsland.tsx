@@ -20,7 +20,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { apiFetch, apiUrl } from "@/lib/api";
-import { emailOptionalSchema, imageFileSchema, vePhoneOptionalSchema } from "@/lib/validators-ve";
+import { emailOptionalSchema, imageFileSchema, phoneOptionalSchema } from "@/lib/validators-ve";
 
 type Position = { id: number; name: string; sort_order: number };
 
@@ -50,7 +50,7 @@ const memSchema = z.object({
   full_name: z.string().min(1, "Indique el nombre completo"),
   bio: z.string().optional(),
   email: emailOptionalSchema,
-  phone: vePhoneOptionalSchema,
+  phone: phoneOptionalSchema,
   sort_order: z.preprocess(
     (v) => (v === "" || v == null || (typeof v === "number" && Number.isNaN(v)) ? 0 : v),
     z.coerce.number().int().min(0),
@@ -61,7 +61,7 @@ type PosForm = z.infer<typeof posSchema>;
 type MemForm = z.infer<typeof memSchema>;
 
 function normPhone(p: string | undefined) {
-  const t = p?.replace(/\s/g, "") ?? "";
+  const t = p?.replace(/\D/g, "") ?? "";
   return t.length > 0 ? t : null;
 }
 
@@ -389,7 +389,7 @@ export function AdminConsejoIsland() {
         <form onSubmit={memForm.handleSubmit(onAddMember)}>
           <AdminFormSection
             title="Nuevo consejal"
-            description="Foto: opcional al crear; se sube con el registro. Teléfono: 11 dígitos empezando en 04."
+            description="Foto: opcional al crear; se sube con el registro. Teléfono: 10 a 15 dígitos, opcional (cualquier prefijo)."
             withTopSeparator
           >
             <div className="grid max-w-2xl gap-4 sm:grid-cols-2">
@@ -475,7 +475,7 @@ export function AdminConsejoIsland() {
                   <FormItem>
                     <FormLabel>Teléfono</FormLabel>
                     <FormControl>
-                      <Input inputMode="numeric" placeholder="04XX XXXXXXX (opcional)" {...field} />
+                      <Input inputMode="tel" autoComplete="tel" placeholder="Ej. 0412, +58 412, línea fija (opcional)" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -594,7 +594,7 @@ export function AdminConsejoIsland() {
                                 <FormItem>
                                   <FormLabel>Teléfono</FormLabel>
                                   <FormControl>
-                                    <Input inputMode="numeric" placeholder="04XX XXXXXXX" {...field} />
+                                    <Input inputMode="tel" autoComplete="tel" placeholder="Teléfono (10–15 dígitos)" {...field} />
                                   </FormControl>
                                 </FormItem>
                               )}

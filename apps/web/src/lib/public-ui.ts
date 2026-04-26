@@ -37,7 +37,7 @@ export const defaultPublicUiConfig: PublicUiConfig = {
     photoPreset: "default",
     modalCorner: "xl",
     modalWidth: "md",
-    photoGrayscale: true,
+    photoGrayscale: false,
   },
 };
 

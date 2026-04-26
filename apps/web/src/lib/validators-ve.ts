@@ -1,17 +1,32 @@
 import { z } from "zod";
 
-const normalizePhone = (s: string) => s.replace(/\s/g, "").trim();
+/** Quita separadores habituales; el valor mostrado/guardado puede seguir con espacios en el formulario. */
+const stripPhoneSeparators = (s: string) => s.replace(/[\s().-]/g, "").trim();
 
-/** Móvil local Venezuela: 11 dígitos, inicia con 04 (ej. 04129872828) */
-const VE_PHONE_RE = /^04\d{9}$/;
+/** Solo dígitos para contar (ignora + al inicio y el resto de no-dígitos). */
+const digitsOnly = (s: string) => s.replace(/\D/g, "");
 
-/** Teléfono opcional: vacío acepta; si hay texto, debe cumplir formato VE móvil. */
-export const vePhoneOptionalSchema = z
+/**
+ * Teléfono opcional: vacío es válido.
+ * Si hay texto, se acepta cualquier número cuyo total de **dígitos** esté entre 10 y 15
+ * (E.164 máx.; no se exigen prefijos como 04).
+ * El valor resultante (si no es vacío) queda en solo dígitos para almacenar.
+ */
+export const phoneOptionalSchema = z
   .string()
-  .transform((s) => normalizePhone(s))
-  .refine((s) => s.length === 0 || VE_PHONE_RE.test(s), {
-    message: "Use 11 dígitos, formato 04XX XXXXXXX (ej. 04129872828)",
-  });
+  .transform((s) => stripPhoneSeparators(s))
+  .refine(
+    (s) => {
+      if (s.length === 0) return true;
+      const d = digitsOnly(s);
+      return d.length >= 10 && d.length <= 15;
+    },
+    { message: "Entre 10 y 15 dígitos, o deje en blanco (puede usar espacios, guiones o +)." },
+  )
+  .transform((s) => (s.length === 0 ? "" : digitsOnly(s)));
+
+/** @deprecated Use `phoneOptionalSchema` */
+export const vePhoneOptionalSchema = phoneOptionalSchema;
 
 export const emailSchema = z
   .string()

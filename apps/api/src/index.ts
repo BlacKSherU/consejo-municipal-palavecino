@@ -96,7 +96,7 @@ const DEFAULT_PUBLIC_UI: PublicUiStored = {
     photoPreset: "default",
     modalCorner: "xl",
     modalWidth: "md",
-    photoGrayscale: true,
+    photoGrayscale: false,
   },
 };
 
@@ -223,6 +223,103 @@ async function loadAboutBundle(db: D1Database) {
   };
 }
 
+type HomePageContent = {
+  hero_badge: string;
+  hero_title_1: string;
+  hero_title_2: string;
+  hero_lead: string;
+  btn_noticias: string;
+  btn_gacetas: string;
+  btn_noticias_href: string;
+  btn_gacetas_href: string;
+  hero_card_text: string;
+  mission_h2: string;
+  mission_text: string;
+  ig_h2: string;
+  ig_lead: string;
+};
+
+const DEFAULT_HOME_PAGE: HomePageContent = {
+  hero_badge: "Portal institucional",
+  hero_title_1: "Consejo Municipal Bolivariano",
+  hero_title_2: "de Palavecino",
+  hero_lead:
+    "Servimos con transparencia, participación y compromiso con el desarrollo local. Conozca nuestro trabajo y conéctese con el consejo.",
+  btn_noticias: "Noticias",
+  btn_gacetas: "Gacetas oficiales",
+  btn_noticias_href: "/noticias",
+  btn_gacetas_href: "/gacetas",
+  hero_card_text: "Juntos construimos el futuro de nuestro municipio.",
+  mission_h2: "Nuestra misión",
+  mission_text:
+    "Ejercer funciones legislativas y de control con integridad, apertura y cercanía con el pueblo, fortaleciendo la democracia participativa local.",
+  ig_h2: "Instagram",
+  ig_lead: "Publicaciones recientes (sincronizadas desde la cuenta oficial).",
+};
+
+function isSafeInternalHref(h: string): boolean {
+  if (h.length > 500) return false;
+  if (!h.startsWith("/") || h.startsWith("//")) return false;
+  if (/^(javascript|data|vbscript):/i.test(h) || h.includes("javascript:")) return false;
+  if (h.includes(" ") || h.includes("\n")) return false;
+  return true;
+}
+
+function mergeHomePageJson(raw: string | null | undefined): HomePageContent {
+  if (!raw?.trim()) return { ...DEFAULT_HOME_PAGE };
+  try {
+    const p = JSON.parse(raw) as Record<string, unknown>;
+    const out: HomePageContent = { ...DEFAULT_HOME_PAGE };
+    (Object.keys(DEFAULT_HOME_PAGE) as (keyof HomePageContent)[]).forEach((k) => {
+      const v = p[k as string];
+      if (typeof v === "string") (out as Record<string, string>)[k] = v;
+    });
+    return out;
+  } catch {
+    return { ...DEFAULT_HOME_PAGE };
+  }
+}
+
+function parseHomePagePutBody(raw: unknown): HomePageContent | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const s = (k: keyof HomePageContent): string | null => {
+    const v = o[k as string];
+    return typeof v === "string" ? v : null;
+  };
+  const limits: Record<keyof HomePageContent, number> = {
+    hero_badge: 300,
+    hero_title_1: 300,
+    hero_title_2: 300,
+    hero_lead: 3_000,
+    btn_noticias: 120,
+    btn_gacetas: 120,
+    btn_noticias_href: 500,
+    btn_gacetas_href: 500,
+    hero_card_text: 800,
+    mission_h2: 300,
+    mission_text: 3_000,
+    ig_h2: 200,
+    ig_lead: 1_000,
+  };
+  const out: HomePageContent = { ...DEFAULT_HOME_PAGE };
+  for (const k of Object.keys(DEFAULT_HOME_PAGE) as (keyof HomePageContent)[]) {
+    const v = s(k);
+    if (v === null) return null;
+    if (v.length > limits[k]) return null;
+    (out as Record<string, string>)[k] = v;
+  }
+  if (!isSafeInternalHref(out.btn_noticias_href) || !isSafeInternalHref(out.btn_gacetas_href)) return null;
+  return out;
+}
+
+async function loadHomePageFromDb(db: D1Database): Promise<HomePageContent> {
+  const row = await db.prepare(`SELECT body FROM site_content WHERE key = 'home_page'`).first<{
+    body: string;
+  }>();
+  return mergeHomePageJson(row?.body);
+}
+
 async function getAuth(c: Context<{ Bindings: Env }>): Promise<{ id: number; email: string } | null> {
   const auth = c.req.raw.headers.get("Authorization");
   let token: string | null = null;
@@ -249,6 +346,11 @@ app.get("/api/site/about", async (c) => {
   c.header("Cache-Control", "no-store");
   const bundle = await loadAboutBundle(c.env.DB);
   return c.json(bundle);
+});
+
+app.get("/api/site/home", async (c) => {
+  c.header("Cache-Control", "no-store");
+  return c.json(await loadHomePageFromDb(c.env.DB));
 });
 
 /** Foto de galería «Quiénes somos» (R2). Público; solo claves bajo about/gallery/. */
@@ -524,6 +626,31 @@ app.put("/api/admin/site/about", async (c) => {
   }
   const bundle = await loadAboutBundle(c.env.DB);
   return c.json({ ok: true, ...bundle });
+});
+
+app.get("/api/admin/site/home", async (c) => {
+  return c.json(await loadHomePageFromDb(c.env.DB));
+});
+
+app.put("/api/admin/site/home", async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON" }, 400);
+  }
+  const h = parseHomePagePutBody(body);
+  if (!h) return c.json({ error: "invalid home content" }, 400);
+  const json = JSON.stringify(h);
+  if (json.length > 50_000) return c.json({ error: "payload too large" }, 400);
+  await c.env.DB
+    .prepare(
+      `INSERT INTO site_content (key, body, updated_at) VALUES ('home_page', ?, datetime('now'))
+       ON CONFLICT(key) DO UPDATE SET body = excluded.body, updated_at = datetime('now')`
+    )
+    .bind(json)
+    .run();
+  return c.json({ ok: true, ...h });
 });
 
 app.get("/api/admin/site/public-ui", async (c) => {
