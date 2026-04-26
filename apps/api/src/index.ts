@@ -139,6 +139,63 @@ async function loadPublicUiFromDb(db: D1Database): Promise<PublicUiStored> {
   }
 }
 
+type AboutImage = { url: string; alt: string };
+
+function parseAboutImages(raw: string | undefined): AboutImage[] {
+  if (!raw?.trim()) return [];
+  try {
+    const j = JSON.parse(raw) as unknown;
+    if (!Array.isArray(j)) return [];
+    const out: AboutImage[] = [];
+    for (const item of j) {
+      if (!item || typeof item !== "object") continue;
+      const o = item as { url?: unknown; alt?: unknown };
+      const url = typeof o.url === "string" ? o.url.trim() : "";
+      const alt = typeof o.alt === "string" ? o.alt.trim() : "";
+      if (!url || !/^https:\/\//i.test(url) || url.length > 2048) continue;
+      out.push({ url, alt: alt.slice(0, 240) });
+      if (out.length >= 12) break;
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+function validateAboutImagesInput(raw: unknown): AboutImage[] | null {
+  if (!Array.isArray(raw)) return null;
+  const out: AboutImage[] = [];
+  for (const item of raw) {
+    if (!item || typeof item !== "object") return null;
+    const o = item as { url?: unknown; alt?: unknown };
+    const url = typeof o.url === "string" ? o.url.trim() : "";
+    const alt = typeof o.alt === "string" ? o.alt.trim() : "";
+    if (!url || !/^https:\/\//i.test(url) || url.length > 2048) return null;
+    if (alt.length > 240) return null;
+    out.push({ url, alt });
+    if (out.length > 12) return null;
+  }
+  return out;
+}
+
+async function loadAboutBundle(db: D1Database) {
+  const rows = await db.prepare(
+    `SELECT key, body, updated_at FROM site_content WHERE key IN ('about','about_mission','about_vision','about_images')`,
+  ).all<{ key: string; body: string; updated_at: string }>();
+  const m = new Map((rows.results ?? []).map((r) => [r.key, r]));
+  const about = m.get("about");
+  const mission = m.get("about_mission");
+  const vision = m.get("about_vision");
+  const imgs = m.get("about_images");
+  return {
+    body: about?.body ?? "",
+    mission: mission?.body ?? "",
+    vision: vision?.body ?? "",
+    images: parseAboutImages(imgs?.body),
+    updated_at: about?.updated_at ?? null,
+  };
+}
+
 async function getAuth(c: Context<{ Bindings: Env }>): Promise<{ id: number; email: string } | null> {
   const auth = c.req.raw.headers.get("Authorization");
   let token: string | null = null;
@@ -162,12 +219,8 @@ const requireAdmin = async (c: Context<{ Bindings: Env; Variables: Variables }>,
 
 // --- Public: site content ---
 app.get("/api/site/about", async (c) => {
-  const row = await c.env.DB.prepare(`SELECT body, updated_at FROM site_content WHERE key = 'about'`).first<{
-    body: string;
-    updated_at: string;
-  }>();
-  if (!row) return c.json({ body: "", updated_at: null });
-  return c.json({ body: row.body, updated_at: row.updated_at });
+  const bundle = await loadAboutBundle(c.env.DB);
+  return c.json(bundle);
 });
 
 app.get("/api/public/ui", async (c) => {
@@ -362,28 +415,36 @@ app.get("/api/auth/me", async (c) => {
 app.use("/api/admin/*", requireAdmin);
 
 app.get("/api/admin/site/about", async (c) => {
-  const row = await c.env.DB.prepare(`SELECT body, updated_at FROM site_content WHERE key = 'about'`).first<{
-    body: string;
-    updated_at: string;
-  }>();
-  return c.json({ body: row?.body ?? "", updated_at: row?.updated_at ?? null });
+  const bundle = await loadAboutBundle(c.env.DB);
+  return c.json(bundle);
 });
 
 app.put("/api/admin/site/about", async (c) => {
-  let body: { body?: string };
+  let body: { body?: string; mission?: string; vision?: string; images?: unknown };
   try {
     body = await c.req.json();
   } catch {
     return c.json({ error: "Invalid JSON" }, 400);
   }
   const text = String(body.body ?? "");
-  await c.env.DB.prepare(
-    `INSERT INTO site_content (key, body, updated_at) VALUES ('about', ?, datetime('now'))
-     ON CONFLICT(key) DO UPDATE SET body = excluded.body, updated_at = datetime('now')`
-  )
-    .bind(text)
-    .run();
-  return c.json({ ok: true });
+  if (text.length > 200_000) return c.json({ error: "body too long" }, 400);
+  const mission = String(body.mission ?? "");
+  const vision = String(body.vision ?? "");
+  if (mission.length > 12_000 || vision.length > 12_000) return c.json({ error: "mission/vision too long" }, 400);
+  const imgs = body.images !== undefined ? validateAboutImagesInput(body.images) : null;
+  if (body.images !== undefined && imgs === null) return c.json({ error: "invalid images" }, 400);
+
+  const stm = `INSERT INTO site_content (key, body, updated_at) VALUES (?, ?, datetime('now'))
+     ON CONFLICT(key) DO UPDATE SET body = excluded.body, updated_at = datetime('now')`;
+
+  await c.env.DB.prepare(stm).bind("about", text).run();
+  await c.env.DB.prepare(stm).bind("about_mission", mission).run();
+  await c.env.DB.prepare(stm).bind("about_vision", vision).run();
+  if (imgs !== null) {
+    await c.env.DB.prepare(stm).bind("about_images", JSON.stringify(imgs)).run();
+  }
+  const bundle = await loadAboutBundle(c.env.DB);
+  return c.json({ ok: true, ...bundle });
 });
 
 app.get("/api/admin/site/public-ui", async (c) => {

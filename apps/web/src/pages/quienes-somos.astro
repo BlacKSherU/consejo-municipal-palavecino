@@ -3,28 +3,25 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="Quiénes somos — Consejo Municipal de Palavecino">
-  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
-    <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Quiénes somos</h1>
-    <div id="about-root" class="prose prose-slate mt-8 max-w-none dark:prose-invert">
-      <p class="text-slate-500">Cargando…</p>
+  <div class="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+    <div id="about-page-root" class="min-h-[16rem]">
+      <div
+        class="flex animate-pulse flex-col gap-6 rounded-2xl border border-slate-200/80 bg-slate-50/80 p-8 dark:border-slate-800 dark:bg-slate-900/40"
+        aria-hidden="true"
+      >
+        <div class="mx-auto h-4 w-40 rounded bg-slate-200 dark:bg-slate-800"></div>
+        <div class="mx-auto h-10 w-3/4 max-w-md rounded bg-slate-200 dark:bg-slate-800"></div>
+        <div class="mx-auto h-4 w-full max-w-lg rounded bg-slate-200 dark:bg-slate-800"></div>
+        <div class="mt-8 grid gap-4 md:grid-cols-2">
+          <div class="h-40 rounded-xl bg-slate-200 dark:bg-slate-800"></div>
+          <div class="h-40 rounded-xl bg-slate-200 dark:bg-slate-800"></div>
+        </div>
+      </div>
     </div>
   </div>
 </BaseLayout>
 
 <script>
-  import { marked } from "marked";
-  import { apiUrl } from "../lib/api";
-
-  async function load() {
-    const root = document.getElementById("about-root");
-    if (!root) return;
-    try {
-      const res = await fetch(apiUrl("/api/site/about"));
-      const data = await res.json();
-      root.innerHTML = marked.parse(data.body || "");
-    } catch {
-      root.innerHTML = "<p>No se pudo cargar el contenido.</p>";
-    }
-  }
-  load();
+  import { initAboutPage } from "../scripts/load-about-page";
+  void initAboutPage();
 </script>
