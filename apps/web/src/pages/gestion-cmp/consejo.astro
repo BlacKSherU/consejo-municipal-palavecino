@@ -56,6 +56,7 @@ import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
 
 <script>
   import { apiFetch } from "../../lib/api";
+  import { ct, escapeHtml } from "../../lib/admin-dom";
 
   let positionsCache: { id: number; name: string }[] = [];
 
@@ -65,7 +66,9 @@ import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
     positionsCache = data.items || [];
     const sel = document.getElementById("mem-pos") as HTMLSelectElement;
     if (sel) {
-      sel.innerHTML = positionsCache.map((p) => `<option value="${p.id}">${escapeHtml(p.name)}<\\/option>`).join("");
+      sel.innerHTML = positionsCache
+        .map((p) => `<option value="${p.id}">${escapeHtml(p.name)}${ct("option")}`)
+        .join("");
     }
     const ul = document.getElementById("pos-list");
     if (ul) {
@@ -73,8 +76,8 @@ import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
       for (const p of positionsCache) {
         const li = document.createElement("li");
         li.className = "flex items-center justify-between gap-2 rounded border border-slate-200 px-3 py-2 dark:border-slate-700";
-        li.innerHTML = `<span>${escapeHtml(p.name)}<\\/span>
-          <button type="button" class="text-sm text-red-600" data-del-pos="${p.id}">Eliminar<\\/button>`;
+        li.innerHTML = `<span>${escapeHtml(p.name)}${ct("span")}
+          <button type="button" class="text-sm text-red-600" data-del-pos="${p.id}">Eliminar${ct("button")}`;
         ul.appendChild(li);
         li.querySelector(`[data-del-pos="${p.id}"]`)?.addEventListener("click", async () => {
           if (!confirm("¿Eliminar puesto y consejales asociados?")) return;
@@ -100,15 +103,15 @@ import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
         card.innerHTML = `
           <div class="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p class="font-semibold">${escapeHtml(m.full_name)}<\\/p>
-              <p class="text-xs text-slate-500">${escapeHtml(p.name)}<\\/p>
-              <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">${escapeHtml(m.bio || "")}<\\/p>
-            <\\/div>
+              <p class="font-semibold">${escapeHtml(m.full_name)}${ct("p")}
+              <p class="text-xs text-slate-500">${escapeHtml(p.name)}${ct("p")}
+              <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">${escapeHtml(m.bio || "")}${ct("p")}
+            ${ct("div")}
             <div class="flex flex-col gap-2">
-              <label class="text-xs">Foto<input type="file" accept="image/*" data-photo="${m.id}" class="block w-full text-xs" /><\\/label>
-              <button type="button" class="text-sm text-red-600" data-del-m="${m.id}">Eliminar<\\/button>
-            <\\/div>
-          <\\/div>
+              <label class="text-xs">Foto<input type="file" accept="image/*" data-photo="${m.id}" class="block w-full text-xs" />${ct("label")}
+              <button type="button" class="text-sm text-red-600" data-del-m="${m.id}">Eliminar${ct("button")}
+            ${ct("div")}
+          ${ct("div")}
         `;
         root.appendChild(card);
         card.querySelector(`[data-del-m="${m.id}"]`)?.addEventListener("click", async () => {
@@ -128,13 +131,6 @@ import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
         });
       }
     }
-  }
-
-  function escapeHtml(s: string) {
-    return String(s || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/"/g, "&quot;");
   }
 
   async function loadAll() {

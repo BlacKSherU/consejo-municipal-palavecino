@@ -132,6 +132,7 @@ const apiBase = getPublicApiUrlForBuild();
 
     <script>
       import { apiFetch, getApiBase, apiUrl } from "../lib/api";
+      import { ct, escapeHtml } from "../lib/admin-dom";
 
       async function init() {
         const gate = document.getElementById("admin-gate");
@@ -168,11 +169,12 @@ const apiBase = getPublicApiUrlForBuild();
           const base = getApiBase() || "(mismo origen — proxy /api)";
           try {
             const r = await fetch(apiUrl("/health"));
+            const baseEsc = escapeHtml(base);
             statusEl.innerHTML = r.ok
-              ? `<span class="text-emerald-600 dark:text-emerald-400">API en línea<\\/span> · <code class="text-xs opacity-80">${base}<\\/code>`
-              : `<span class="text-amber-600">API respondió con error<\\/span> · <code class="text-xs">${base}<\\/code>`;
+              ? `<span class="text-emerald-600 dark:text-emerald-400">API en línea${ct("span")} · <code class="text-xs opacity-80">${baseEsc}${ct("code")}`
+              : `<span class="text-amber-600">API respondió con error${ct("span")} · <code class="text-xs">${baseEsc}${ct("code")}`;
           } catch {
-            statusEl.innerHTML = `<span class="text-red-600 dark:text-red-400">No se pudo conectar al API<\\/span> · <code class="text-xs break-all">${base}<\\/code> · Configura PUBLIC_API_URL en Cloudflare Pages y CORS_ORIGIN en el Worker.`;
+            statusEl.innerHTML = `<span class="text-red-600 dark:text-red-400">No se pudo conectar al API${ct("span")} · <code class="text-xs break-all">${escapeHtml(base)}${ct("code")} · Configura PUBLIC_API_URL en Cloudflare Pages y CORS_ORIGIN en el Worker.`;
           }
         }
       }
