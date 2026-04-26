@@ -5,7 +5,9 @@ type Bundle = {
   body?: string;
   mission?: string;
   vision?: string;
-  images?: { url: string; alt: string }[];
+  kicker?: string;
+  hero?: string;
+  images?: { url?: string; key?: string; alt: string }[];
 };
 
 function clear(el: HTMLElement) {
@@ -17,7 +19,7 @@ export async function initAboutPage(rootId = "about-page-root"): Promise<void> {
   if (!root) return;
 
   try {
-    const res = await fetch(apiUrl("/api/site/about"));
+    const res = await fetch(apiUrl("/api/site/about"), { cache: "no-store" });
     if (!res.ok) throw new Error("fetch");
     const data = (await res.json()) as Bundle;
 
@@ -31,7 +33,8 @@ export async function initAboutPage(rootId = "about-page-root"): Promise<void> {
     const kicker = document.createElement("p");
     kicker.className =
       "text-xs font-semibold uppercase tracking-[0.25em] text-brand dark:text-brand-muted";
-    kicker.textContent = "Consejo Municipal de Palavecino";
+    kicker.textContent =
+      (data.kicker && data.kicker.trim()) || "Consejo Municipal de Palavecino";
     head.appendChild(kicker);
     const h1 = document.createElement("h1");
     h1.className =
@@ -41,6 +44,7 @@ export async function initAboutPage(rootId = "about-page-root"): Promise<void> {
     const sub = document.createElement("p");
     sub.className = "mx-auto mt-4 max-w-2xl text-lg text-slate-600 dark:text-slate-400";
     sub.textContent =
+      (data.hero && data.hero.trim()) ||
       "Identidad institucional, propósito y horizonte del Consejo Municipal Bolivariano de Palavecino.";
     head.appendChild(sub);
 
@@ -70,9 +74,17 @@ export async function initAboutPage(rootId = "about-page-root"): Promise<void> {
       th.className = "text-xl font-bold text-slate-900 dark:text-white";
       th.textContent = title;
       c.appendChild(th);
-      const tp = document.createElement("p");
-      tp.className = "mt-4 text-base leading-relaxed text-slate-600 dark:text-slate-300";
-      tp.textContent = text.trim() || "Configure este texto en el panel de administración.";
+      const tp = document.createElement("div");
+      tp.className =
+        "prose prose-slate mt-4 max-w-none dark:prose-invert prose-p:mb-3 prose-p:last:mb-0 text-base leading-relaxed text-slate-600 dark:prose-p:text-slate-300";
+      if (text.trim()) {
+        tp.innerHTML = marked.parse(text.trim(), { async: false }) as string;
+      } else {
+        const ph = document.createElement("p");
+        ph.className = "not-prose";
+        ph.textContent = "Configure este texto en el panel de administración.";
+        tp.appendChild(ph);
+      }
       c.appendChild(tp);
       return c;
     };
@@ -92,17 +104,21 @@ export async function initAboutPage(rootId = "about-page-root"): Promise<void> {
       sec.appendChild(gh);
       const gp = document.createElement("p");
       gp.className = "mx-auto mt-2 max-w-xl text-center text-sm text-slate-500 dark:text-slate-400";
-      gp.textContent = "Galería configurable desde administración (enlaces HTTPS).";
+      gp.textContent = "Galería de imágenes publicadas desde el panel (almacenamiento en el sitio).";
       sec.appendChild(gp);
 
       const grid = document.createElement("div");
       grid.className = "mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3";
       for (const im of imgs) {
+        const src = im.key
+          ? apiUrl("/api/site/about/photo?key=" + encodeURIComponent(im.key))
+          : im.url ?? "";
+        if (!src) continue;
         const fig = document.createElement("figure");
         fig.className =
           "group overflow-hidden rounded-2xl border border-slate-200/90 bg-slate-100 shadow-md dark:border-slate-700 dark:bg-slate-800/50";
         const img = document.createElement("img");
-        img.src = im.url;
+        img.src = src;
         img.alt = im.alt || "";
         img.loading = "lazy";
         img.className =

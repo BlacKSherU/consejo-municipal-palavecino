@@ -139,7 +139,28 @@ async function loadPublicUiFromDb(db: D1Database): Promise<PublicUiStored> {
   }
 }
 
-type AboutImage = { url: string; alt: string };
+/** Imagen: URL externa (https) o clave R2 bajo about/gallery/ (subida en admin). */
+type AboutImage = { alt: string; url?: string; key?: string };
+
+const ABOUT_GALLERY_KEY_RE = /^about\/gallery\/[a-zA-Z0-9._-]+$/;
+
+function parseOneAboutImageItem(o: { url?: unknown; key?: unknown; alt?: unknown }): AboutImage | null {
+  const alt = typeof o.alt === "string" ? o.alt.trim() : "";
+  if (alt.length > 240) return null;
+  const url = typeof o.url === "string" ? o.url.trim() : "";
+  const key = typeof o.key === "string" ? o.key.trim() : "";
+  if (key) {
+    if (url) return null;
+    if (!ABOUT_GALLERY_KEY_RE.test(key)) return null;
+    return { key, alt: alt.slice(0, 240) };
+  }
+  if (url) {
+    if (key) return null;
+    if (!/^https:\/\//i.test(url) || url.length > 2048) return null;
+    return { url, alt: alt.slice(0, 240) };
+  }
+  return null;
+}
 
 function parseAboutImages(raw: string | undefined): AboutImage[] {
   if (!raw?.trim()) return [];
@@ -149,11 +170,8 @@ function parseAboutImages(raw: string | undefined): AboutImage[] {
     const out: AboutImage[] = [];
     for (const item of j) {
       if (!item || typeof item !== "object") continue;
-      const o = item as { url?: unknown; alt?: unknown };
-      const url = typeof o.url === "string" ? o.url.trim() : "";
-      const alt = typeof o.alt === "string" ? o.alt.trim() : "";
-      if (!url || !/^https:\/\//i.test(url) || url.length > 2048) continue;
-      out.push({ url, alt: alt.slice(0, 240) });
+      const p = parseOneAboutImageItem(item as { url?: unknown; key?: unknown; alt?: unknown });
+      if (p) out.push(p);
       if (out.length >= 12) break;
     }
     return out;
@@ -167,30 +185,39 @@ function validateAboutImagesInput(raw: unknown): AboutImage[] | null {
   const out: AboutImage[] = [];
   for (const item of raw) {
     if (!item || typeof item !== "object") return null;
-    const o = item as { url?: unknown; alt?: unknown };
-    const url = typeof o.url === "string" ? o.url.trim() : "";
-    const alt = typeof o.alt === "string" ? o.alt.trim() : "";
-    if (!url || !/^https:\/\//i.test(url) || url.length > 2048) return null;
-    if (alt.length > 240) return null;
-    out.push({ url, alt });
+    const p = parseOneAboutImageItem(item as { url?: unknown; key?: unknown; alt?: unknown });
+    if (!p) return null;
+    out.push(p);
     if (out.length > 12) return null;
   }
   return out;
 }
 
+function aboutImageR2Keys(imgs: AboutImage[]): string[] {
+  return imgs.map((i) => i.key).filter((k): k is string => typeof k === "string" && k.length > 0);
+}
+
 async function loadAboutBundle(db: D1Database) {
   const rows = await db.prepare(
-    `SELECT key, body, updated_at FROM site_content WHERE key IN ('about','about_mission','about_vision','about_images')`,
+    `SELECT key, body, updated_at FROM site_content WHERE key IN (
+      'about','about_mission','about_vision','about_images','about_kicker','about_hero'
+    )`,
   ).all<{ key: string; body: string; updated_at: string }>();
   const m = new Map((rows.results ?? []).map((r) => [r.key, r]));
   const about = m.get("about");
   const mission = m.get("about_mission");
   const vision = m.get("about_vision");
   const imgs = m.get("about_images");
+  const kicker = m.get("about_kicker");
+  const hero = m.get("about_hero");
   return {
     body: about?.body ?? "",
     mission: mission?.body ?? "",
     vision: vision?.body ?? "",
+    kicker: kicker?.body?.trim() ?? "Consejo Municipal de Palavecino",
+    hero:
+      hero?.body?.trim() ??
+      "Identidad institucional, propósito y horizonte del Consejo Municipal Bolivariano de Palavecino.",
     images: parseAboutImages(imgs?.body),
     updated_at: about?.updated_at ?? null,
   };
@@ -219,8 +246,23 @@ const requireAdmin = async (c: Context<{ Bindings: Env; Variables: Variables }>,
 
 // --- Public: site content ---
 app.get("/api/site/about", async (c) => {
+  c.header("Cache-Control", "no-store");
   const bundle = await loadAboutBundle(c.env.DB);
   return c.json(bundle);
+});
+
+/** Foto de galería «Quiénes somos» (R2). Público; solo claves bajo about/gallery/. */
+app.get("/api/site/about/photo", async (c) => {
+  const key = (c.req.query("key") ?? "").trim();
+  if (!key || !ABOUT_GALLERY_KEY_RE.test(key)) return c.json({ error: "Invalid key" }, 400);
+  const obj = await c.env.BUCKET.get(key);
+  if (!obj) return c.json({ error: "Not found" }, 404);
+  return new Response(obj.body, {
+    headers: {
+      "Content-Type": obj.httpMetadata?.contentType ?? "image/jpeg",
+      "Cache-Control": "public, max-age=86400",
+    },
+  });
 });
 
 app.get("/api/public/ui", async (c) => {
@@ -419,8 +461,28 @@ app.get("/api/admin/site/about", async (c) => {
   return c.json(bundle);
 });
 
+app.post("/api/admin/site/about/gallery", async (c) => {
+  const form = await c.req.parseBody();
+  const file = form.file;
+  if (!file || typeof file === "string") return c.json({ error: "file required" }, 400);
+  const f = file as File;
+  const ext = (f.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const key = `about/gallery/${crypto.randomUUID()}.${ext || "jpg"}`;
+  await c.env.BUCKET.put(key, f.stream(), {
+    httpMetadata: { contentType: f.type || "image/jpeg" },
+  });
+  return c.json({ ok: true, key });
+});
+
 app.put("/api/admin/site/about", async (c) => {
-  let body: { body?: string; mission?: string; vision?: string; images?: unknown };
+  let body: {
+    body?: string;
+    mission?: string;
+    vision?: string;
+    kicker?: string;
+    hero?: string;
+    images?: unknown;
+  };
   try {
     body = await c.req.json();
   } catch {
@@ -431,6 +493,17 @@ app.put("/api/admin/site/about", async (c) => {
   const mission = String(body.mission ?? "");
   const vision = String(body.vision ?? "");
   if (mission.length > 12_000 || vision.length > 12_000) return c.json({ error: "mission/vision too long" }, 400);
+  const kicker = String(body.kicker ?? "");
+  const hero = String(body.hero ?? "");
+  if (kicker.length > 500 || hero.length > 2_000) return c.json({ error: "kicker/hero too long" }, 400);
+
+  let oldKeys: string[] = [];
+  if (body.images !== undefined) {
+    const oldRow = await c.env.DB.prepare(`SELECT body FROM site_content WHERE key = 'about_images'`)
+      .first<{ body: string }>();
+    oldKeys = aboutImageR2Keys(parseAboutImages(oldRow?.body));
+  }
+
   const imgs = body.images !== undefined ? validateAboutImagesInput(body.images) : null;
   if (body.images !== undefined && imgs === null) return c.json({ error: "invalid images" }, 400);
 
@@ -440,7 +513,13 @@ app.put("/api/admin/site/about", async (c) => {
   await c.env.DB.prepare(stm).bind("about", text).run();
   await c.env.DB.prepare(stm).bind("about_mission", mission).run();
   await c.env.DB.prepare(stm).bind("about_vision", vision).run();
+  await c.env.DB.prepare(stm).bind("about_kicker", kicker).run();
+  await c.env.DB.prepare(stm).bind("about_hero", hero).run();
   if (imgs !== null) {
+    const newKeys = aboutImageR2Keys(imgs);
+    for (const k of oldKeys) {
+      if (!newKeys.includes(k)) await c.env.BUCKET.delete(k);
+    }
     await c.env.DB.prepare(stm).bind("about_images", JSON.stringify(imgs)).run();
   }
   const bundle = await loadAboutBundle(c.env.DB);
