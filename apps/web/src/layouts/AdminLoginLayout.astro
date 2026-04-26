@@ -7,7 +7,7 @@ const apiBase = getPublicApiUrlForBuild();
 ---
 
 <!doctype html>
-<html lang="es" class="h-full">
+<html lang="es" class="h-full min-h-dvh">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -27,9 +27,9 @@ const apiBase = getPublicApiUrlForBuild();
     </script>
   </head>
   <body
-    class="min-h-full bg-gradient-to-br from-slate-900 via-slate-900 to-brand/20 font-sans text-slate-100 antialiased"
+    class="flex min-h-dvh flex-col bg-gradient-to-br from-slate-900 via-slate-900 to-brand/20 font-sans text-slate-100 antialiased"
   >
-    <div class="mx-auto flex min-h-screen max-w-lg flex-col justify-center px-4 py-12">
+    <div class="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-12">
       <div class="rounded-2xl border border-slate-700/80 bg-slate-900/90 p-8 shadow-2xl backdrop-blur">
         <div class="mb-8 text-center">
           <img src="/logo.svg" alt="" class="mx-auto h-14 w-14" width="56" height="56" />

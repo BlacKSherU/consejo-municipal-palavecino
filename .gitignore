@@ -17,6 +17,7 @@ ENV/
 !.env.example
 apps/api/.dev.vars
 apps/api/seed-admin.sql
+apps/api/seed-demo.sql
 
 # IDEs y editores
 .idea/

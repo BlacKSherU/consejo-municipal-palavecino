@@ -60,6 +60,18 @@ npx wrangler d1 execute cmp-db --local --file=seed-admin.sql
 
 Sin `--write`, el script solo imprime el SQL en la consola (tendrías que guardarlo tú en un `.sql`).
 
+### Datos de demostración (ficticios)
+
+Borra el contenido de negocio en D1 (noticias, consejo, gacetas, “Quiénes somos”, usuarios admin) e inserta ejemplos y un admin de prueba. Muestra **correo y contraseña** en consola. Úsalo solo en entornos de prueba (no en datos reales que deban conservarse).
+
+```bash
+cd apps/api
+npm run seed:demo
+npx wrangler d1 execute cmp-db --remote --file=seed-demo.sql
+```
+
+Por defecto: `admin@demo.cmp.test` / `DemoCmp2025!`. Personaliza con `SEED_DEMO_EMAIL` y `SEED_DEMO_PASSWORD`. Las gacetas demo apuntan a claves R2 inexistentes: se listan en el sitio; la descarga fallará hasta subir PDFs reales.
+
 ### Instagram (Meta)
 
 1. Cuenta Instagram profesional vinculada a una página de Facebook.

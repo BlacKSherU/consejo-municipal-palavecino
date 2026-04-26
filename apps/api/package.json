@@ -7,7 +7,8 @@
     "deploy:dry-run": "wrangler deploy --dry-run",
     "db:migrate:local": "wrangler d1 migrations apply cmp-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply cmp-db --remote",
-    "seed": "node scripts/seed-admin.mjs"
+    "seed": "node scripts/seed-admin.mjs",
+    "seed:demo": "node scripts/seed-demo.mjs --write"
   },
   "dependencies": {
     "hono": "^4.6.14",
