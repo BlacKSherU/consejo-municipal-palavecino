@@ -82,8 +82,14 @@ export default function GacetasSearchIsland() {
   const [err, setErr] = useState<string | null>(null);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const qDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const qInputRef = useRef("");
   const dateFromRef = useRef("");
   const dateToRef = useRef("");
+  const skipNextCloseCommit = useRef(false);
+
+  useEffect(() => {
+    qInputRef.current = qInput;
+  }, [qInput]);
 
   useEffect(() => {
     dateFromRef.current = dateFromYmd;
@@ -214,28 +220,49 @@ export default function GacetasSearchIsland() {
   const goPage = (p: number) => {
     const next = Math.max(1, Math.min(totalPages, p));
     setPage(next);
-    syncUrl(qInput, next, dateFromYmd, dateToYmd);
-    void load(qInput, next, dateFromYmd, dateToYmd);
+    const q0 = qInputRef.current;
+    syncUrl(q0, next, dateFromYmd, dateToYmd);
+    void load(q0, next, dateFromYmd, dateToYmd);
   };
 
-  const applyRange = (r: DateRange | undefined) => {
+  /** Solo calendario (borrador); el filtro se aplica al cerrar el popover. */
+  const onCalendarSelect = (r: DateRange | undefined) => {
     setRange(r);
     rangeRef.current = r;
-    const from = toYmd(r?.from);
-    const to = toYmd(r?.to);
-    setDateFromYmd(from);
-    setDateToYmd(to);
-    dateFromRef.current = from;
-    dateToRef.current = to;
-    if (from && to) {
-      setPage(1);
-      setQ(qInput);
-      syncUrl(qInput, 1, from, to);
-      void load(qInput, 1, from, to);
-    }
   };
 
+  const commitDateFilterOnClose = useCallback(() => {
+    if (skipNextCloseCommit.current) {
+      skipNextCloseCommit.current = false;
+      return;
+    }
+    const r = rangeRef.current;
+    const from = toYmd(r?.from);
+    const to = toYmd(r?.to);
+    const q0 = qInputRef.current;
+    if (from && to) {
+      setDateFromYmd(from);
+      setDateToYmd(to);
+      dateFromRef.current = from;
+      dateToRef.current = to;
+      setPage(1);
+      setQ(q0);
+      syncUrl(q0, 1, from, to);
+      void load(q0, 1, from, to);
+    } else if (!r?.from && !r?.to) {
+      setDateFromYmd("");
+      setDateToYmd("");
+      dateFromRef.current = "";
+      dateToRef.current = "";
+      setPage(1);
+      setQ(q0);
+      syncUrl(q0, 1, "", "");
+      void load(q0, 1, "", "");
+    }
+  }, [load]);
+
   const clearDateFilter = () => {
+    skipNextCloseCommit.current = true;
     setRange(undefined);
     rangeRef.current = undefined;
     setDateFromYmd("");
@@ -244,14 +271,23 @@ export default function GacetasSearchIsland() {
     dateToRef.current = "";
     setPage(1);
     setDatePopoverOpen(false);
-    syncUrl(qInput, 1, "", "");
-    void load(qInput, 1, "", "");
+    const q0 = qInputRef.current;
+    syncUrl(q0, 1, "", "");
+    void load(q0, 1, "", "");
   };
 
   const shouldBlockPopoverClose = () => isRangePartial(rangeRef.current);
 
   const onDateOpenChange = (o: boolean) => {
     if (o) {
+      if (dateFromYmd && dateToYmd) {
+        const dr = { from: parseYmd(dateFromYmd), to: parseYmd(dateToYmd) };
+        setRange(dr);
+        rangeRef.current = dr;
+      } else {
+        setRange(undefined);
+        rangeRef.current = undefined;
+      }
       setDatePopoverOpen(true);
       return;
     }
@@ -259,6 +295,7 @@ export default function GacetasSearchIsland() {
       return;
     }
     setDatePopoverOpen(false);
+    commitDateFilterOnClose();
   };
 
   const listItems: List2Item[] = items.map((g) => {
@@ -274,10 +311,24 @@ export default function GacetasSearchIsland() {
     };
   });
 
-  const rangeButtonLabel =
-    range?.from && range?.to
-      ? formatDateRange(range.from, range.to, { includeTime: false, locale: "es" })
-      : "Rango de fechas";
+  const rangeButtonLabel = (() => {
+    if (datePopoverOpen) {
+      if (range?.from && range?.to) {
+        return formatDateRange(range.from, range.to, { includeTime: false, locale: "es" });
+      }
+      if (range?.from) {
+        return "Elija el día de fin del rango";
+      }
+    }
+    if (dateFromYmd && dateToYmd) {
+      const a = parseYmd(dateFromYmd);
+      const b = parseYmd(dateToYmd);
+      if (a && b) {
+        return formatDateRange(a, b, { includeTime: false, locale: "es" });
+      }
+    }
+    return "Rango de fechas";
+  })();
 
   return (
     <div>
@@ -340,11 +391,16 @@ export default function GacetasSearchIsland() {
                     if (shouldBlockPopoverClose()) e.preventDefault();
                   }}
                 >
-                  <div className="p-1">
+                  <div
+                    className={cn(
+                      "p-1",
+                      "[&_.rdp-root]:[--rdp-accent-color:#9B2D8A] [&_.rdp-root]:[--rdp-accent-background-color:rgb(245_230_244)] [&_.rdp-root]:[--rdp-today-color:#9B2D8A]",
+                    )}
+                  >
                     <Calendar
                       mode="range"
                       selected={range}
-                      onSelect={applyRange}
+                      onSelect={onCalendarSelect}
                       numberOfMonths={1}
                       className="rounded-md"
                     />
@@ -355,10 +411,7 @@ export default function GacetasSearchIsland() {
                       variant="ghost"
                       size="sm"
                       className="w-full"
-                      onClick={() => {
-                        setDatePopoverOpen(false);
-                        clearDateFilter();
-                      }}
+                      onClick={clearDateFilter}
                     >
                       <X className="mr-1 h-4 w-4" />
                       Quitar filtro de fechas
