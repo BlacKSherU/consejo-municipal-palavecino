@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { List2, type List2Item } from "@/components/ui/list-2";
 import { apiUrl } from "@/lib/api";
 
-const PER = 10;
+const PER = 5;
 
 type ApiNews = {
   slug: string;
   title: string;
   excerpt: string;
   published_at: string | null;
+  image_url?: string | null;
 };
 
 function formatD(iso: string | null | undefined): string {
@@ -100,13 +101,20 @@ export default function NewsSearchIsland() {
     void load(q, next);
   };
 
-  const listItems: List2Item[] = items.map((n) => ({
-    icon: <FileText className="h-6 w-6" />,
-    title: n.title,
-    category: formatD(n.published_at),
-    description: (n.excerpt || "").trim() || "—",
-    link: `/noticias/detalle?slug=${encodeURIComponent(n.slug)}`,
-  }));
+  const listItems: List2Item[] = items.map((n) => {
+    const src = n.image_url?.trim();
+    return {
+      icon: src ? (
+        <img src={src} alt="" className="h-full w-full object-cover" loading="lazy" />
+      ) : (
+        <FileText className="h-6 w-6" />
+      ),
+      title: n.title,
+      category: formatD(n.published_at),
+      description: (n.excerpt || "").trim() || "—",
+      link: `/noticias/detalle?slug=${encodeURIComponent(n.slug)}`,
+    };
+  });
 
   return (
     <div>
@@ -138,7 +146,6 @@ export default function NewsSearchIsland() {
       ) : (
         <>
           <List2
-            heading={total > 0 ? `Resultados (${total})` : undefined}
             items={listItems}
             actionLabel="Leer noticia"
             sectionClassName="py-0"

@@ -40,13 +40,41 @@ const password = process.env.SEED_DEMO_PASSWORD || "DemoCmp2025!";
 
 const passwordRecord = hashPassword(password);
 
+const aboutMission =
+  "Ejercer la función legislativa local y el control político del municipio Palavecino, creando y reformando ordenanzas de manera participativa junto a las comunidades. Su labor se rige por el compromiso de legislar con \"Honestidad, Eficiencia y Buen Servicio\", buscando dar respuestas normativas a las necesidades de servicios públicos, ordenamiento territorial y autonomía financiera de los ciudadanos.";
+
+const aboutVision =
+  "Ser el epicentro de la autonomía municipal que impulse la transformación y modernización de Palavecino frente a su acelerado crecimiento demográfico. Aspira a consolidar una ciudad funcional, segura y próspera mediante la sostenibilidad financiera, la resiliencia urbana, la modernización digital de su marco normativo y la protección rigurosa de su patrimonio histórico y ambiental, como el Parque Nacional Terepaima.";
+
+/** Detalle en Markdown (sección «Nuestra historia e información» en el sitio público). */
 const aboutBody = [
-  "# Consejo Municipal (demo)",
+  "## Concejo Municipal Bolivariano de Palavecino",
   "",
-  "Este **texto es de demostración** para ajustar estilos. Palavecino — contenido 100% ficticio.",
+  "## Información General",
+  "El **Consejo Municipal de Palavecino** es el órgano deliberante y depositario de la potestad legislativa local del municipio Palavecino, estado Lara. Su sede principal se encuentra en el Edificio de los Poderes Públicos, ubicado en la calle Juan de Dios Ponte, frente a la Plaza Aquilino Juárez (o Plaza La Cruz), en el centro neurálgico de Cabudare.",
   "",
-  "## Misión (ejemplo)",
-  "Servir a la comunidad con transparencia.",
+  "* **Lema Institucional:** \"¡Legislando con Honestidad, Eficiencia y Buen Servicio!\"",
+  "",
+  "## Composición y Directiva",
+  "El cuerpo legislativo está conformado por un total de **nueve (9) concejales**. Históricamente ha reflejado las transiciones políticas del país, y para el período legislativo 2024, su composición cuenta con **siete (7) concejales pertenecientes a la bancada del PSUV - GPP y dos (2) de los partidos de oposición**.",
+  "",
+  "Para el período legislativo 2023, la Junta Directiva se instaló de la siguiente manera:",
+  "* **Presidenta:** Edderick Roxana Escalona (educadora).",
+  "* **Vicepresidente:** José Timaure.",
+  "* **Secretaría:** Flor Ramírez (Secretaria) y Zubely Mendoza (Subsecretaria).",
+  "",
+  "## Funciones y Competencias Principales",
+  "De acuerdo con la Ley Orgánica del Poder Público Municipal y las dinámicas locales, el Concejo Municipal tiene las siguientes responsabilidades primordiales:",
+  "",
+  "* **Creación de Ordenanzas:** Iniciar, consultar, discutir y sancionar proyectos de ordenanzas que regulan la vida local, abarcando desde la convivencia ciudadana y el ordenamiento urbano, hasta las actividades económicas y de hacienda pública.",
+  "* **Control Político y Fiscal:** Ejercer funciones de control sobre el gobierno ejecutivo local (Alcaldía) y la administración pública municipal.",
+  "* **Participación Ciudadana:** Garantizar y promover la inclusión del pueblo en las decisiones normativas mediante mecanismos como consultas públicas, mesas de trabajo y recepción de propuestas vecinales.",
+  "* **Guardián de la Identidad:** Legislar para la preservación del patrimonio histórico y la promoción de los símbolos patrios locales, como la bandera, el escudo y elementos representativos como el Parque Nacional Terepaima o la histórica Ceiba de Cabudare.",
+  "",
+  "## Hitos Legislativos y Desafíos Recientes",
+  "* **Modernización Tributaria:** Entre 2022 y 2024, el Concejo ha tenido una actividad legislativa intensa para adaptar sus ordenanzas a la normativa nacional (LOCAPTEM), modernizando los tributos y estableciendo la **Unidad de Cuenta Dinámica (UCD)** para proteger la recaudación de la volatilidad cambiaria.",
+  "* **Gestión de Crisis y Servicios Públicos:** El Concejo enfrenta el reto monumental de la crisis hídrica que afecta a más de **124.000 habitantes** por la inoperatividad de pozos profundos, debatiendo la creación de fondos o alianzas para la infraestructura del agua, indispensable para que el municipio no paralice su crecimiento inmobiliario.",
+  "",
 ].join("\n");
 
 /** Seis noticias (Markdown enriquecido; imágenes vía Unsplash; solo seeder de demostración). */
@@ -333,7 +361,10 @@ DELETE FROM news;
 DELETE FROM admin_users;
 DELETE FROM site_content;
 
-INSERT INTO site_content (key, body) VALUES ('about', ${q(aboutBody)});
+INSERT INTO site_content (key, body) VALUES
+  ('about_mission', ${q(aboutMission)}),
+  ('about_vision', ${q(aboutVision)}),
+  ('about', ${q(aboutBody)});
 
 INSERT INTO admin_users (email, password_record) VALUES (${q(email)}, ${q(passwordRecord)});
 `
@@ -344,6 +375,23 @@ for (const n of newsRows) {
     `INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES (${q(
       n.slug
     )}, ${q(n.title)}, ${q(n.excerpt)}, ${q(n.body)}, 1, ${q(n.published_at)});`
+  );
+}
+
+/** 20 noticias mínimas para probar paginación; fechas antiguas para quedar al final del listado. */
+const unsplashFiller =
+  "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format";
+for (let i = 1; i <= 20; i++) {
+  const slug = `noticia-relleno-${i}`;
+  const title = `Noticia de relleno ${i}`;
+  const excerpt = "";
+  const body = `![Relleno](${unsplashFiller})\n`;
+  const d = new Date(Date.UTC(2010, 0, 1 + i));
+  const published_at = d.toISOString().replace(/\.\d{3}Z$/, "Z");
+  parts.push(
+    `INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES (${q(
+      slug
+    )}, ${q(title)}, ${q(excerpt)}, ${q(body)}, 1, ${q(published_at)});`
   );
 }
 
@@ -378,6 +426,27 @@ INSERT INTO gazettes (title, issue_number, published_at, r2_key, file_name, file
     0,
     'application/pdf'
   );
+`
+);
+
+const fillerGaz = [];
+for (let i = 1; i <= 20; i++) {
+  const d = new Date(Date.UTC(2008, 0, 1 + i * 3));
+  const published_at = d.toISOString().replace(/\.\d{3}Z$/, "Z");
+  fillerGaz.push(
+    `  (${q(`Gaceta de relleno ${i} (prueba)`)}, ${q(`GO-FILL-${String(i).padStart(3, "0")}`)}, ${q(
+      published_at
+    )}, 'gacetas/demo/gaceta-enero-2025.pdf', ${q(`Gaceta-relleno-${i}-demo.pdf`)}, 0, 'application/pdf')`
+  );
+}
+parts.push(
+  `INSERT INTO gazettes (title, issue_number, published_at, r2_key, file_name, file_size, mime) VALUES
+${fillerGaz.join(",\n")};
+`
+);
+
+parts.push(`
+
 
 UPDATE instagram_cache SET payload = '[]', error = NULL, fetched_at = datetime('now') WHERE id = 1;
 `);

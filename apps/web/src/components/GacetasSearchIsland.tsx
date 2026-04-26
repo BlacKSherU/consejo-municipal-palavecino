@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { List2, type List2Item } from "@/components/ui/list-2";
 import { apiUrl } from "@/lib/api";
 
-const PER = 10;
+const PER = 5;
 
 type Gazette = {
   id: number;
@@ -148,7 +148,6 @@ export default function GacetasSearchIsland() {
       ) : (
         <>
           <List2
-            heading={total > 0 ? `Resultados (${total})` : undefined}
             items={listItems}
             actionLabel="Descargar PDF"
             sectionClassName="py-0"

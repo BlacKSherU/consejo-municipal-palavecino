@@ -25,6 +25,13 @@ function corsOrigins(env: Env): string[] {
   return raw.split(",").map((s) => normalizeOrigin(s)).filter(Boolean);
 }
 
+/** Primera imagen de Markdown `![](url)` o `![alt](url)` en el cuerpo. */
+function firstMarkdownImageUrl(body: string | null | undefined): string | null {
+  if (!body) return null;
+  const m = /!\[[^\]]*\]\(([^)\s]+)(?:\s+["'][^"']*["'])?\)/.exec(body);
+  return m?.[1] ?? null;
+}
+
 app.use("*", async (c, next) => {
   const allowed = corsOrigins(c.env);
   return cors({
@@ -411,16 +418,24 @@ app.get("/api/news", async (c) => {
     .first<{ c: number }>();
   const total = countRow?.c ?? 0;
 
-  const baseSelect = `SELECT id, slug, title, excerpt, published_at, updated_at FROM news WHERE ${whereSql} ${orderSql}`;
+  const baseSelect = `SELECT id, slug, title, excerpt, body, published_at, updated_at FROM news WHERE ${whereSql} ${orderSql}`;
 
   type NewsRow = {
     id: number;
     slug: string;
     title: string;
     excerpt: string;
+    body: string;
     published_at: string | null;
     updated_at: string;
   };
+
+  function mapNewsList(rows: NewsRow[] | null | undefined) {
+    return (rows ?? []).map((row) => {
+      const { body, ...rest } = row;
+      return { ...rest, image_url: firstMarkdownImageUrl(body) };
+    });
+  }
 
   if (hasPage) {
     const page = Math.max(1, parseInt(String(pageQ), 10) || 1);
@@ -428,7 +443,7 @@ app.get("/api/news", async (c) => {
     const listBinds = [...binds, perPage, offset];
     const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<NewsRow>();
     return c.json({
-      items: rows.results ?? [],
+      items: mapNewsList(rows.results),
       total,
       page,
       perPage,
@@ -440,10 +455,10 @@ app.get("/api/news", async (c) => {
     const offset = Math.max(0, parseInt(String(offsetQ ?? "0"), 10) || 0);
     const listBinds = [...binds, limit, offset];
     const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<NewsRow>();
-    return c.json({ items: rows.results ?? [], total, limit, offset });
+    return c.json({ items: mapNewsList(rows.results), total, limit, offset });
   }
   const rows = await c.env.DB.prepare(baseSelect).bind(...binds).all<NewsRow>();
-  return c.json({ items: rows.results ?? [], total });
+  return c.json({ items: mapNewsList(rows.results), total });
 });
 
 app.get("/api/news/:slug", async (c) => {

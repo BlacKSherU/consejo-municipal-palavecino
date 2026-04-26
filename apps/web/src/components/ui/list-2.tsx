@@ -25,7 +25,7 @@ export interface List2Props {
 }
 
 export const List2 = ({
-  heading = "Listado",
+  heading,
   items = [],
   actionLabel = "Abrir",
   className,
@@ -35,7 +35,7 @@ export const List2 = ({
   return (
     <section className={cn("py-12 md:py-20", sectionClassName)}>
       <div className={cn("container mx-auto px-0 md:px-8", className)}>
-        {heading && (
+        {heading != null && heading !== "" && (
           <h1 className="mb-8 px-4 text-3xl font-semibold md:mb-10 md:text-4xl">{heading}</h1>
         )}
         {items.length === 0 ? (
@@ -47,7 +47,7 @@ export const List2 = ({
               <React.Fragment key={`${item.link}-${item.title}-${index}`}>
                 <div className="grid items-center gap-4 px-4 py-5 md:grid-cols-4">
                   <div className="order-2 flex items-center gap-2 md:order-none">
-                    <span className="flex h-14 w-16 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                    <span className="flex h-14 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted text-muted-foreground">
                       {item.icon}
                     </span>
                     <div className="flex min-w-0 flex-col gap-1">
