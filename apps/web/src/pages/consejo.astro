@@ -1,73 +1,14 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import CouncilTeamIsland from "../components/CouncilTeamIsland";
 ---
 
 <BaseLayout title="Consejo — Consejo Municipal de Palavecino">
   <div class="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
     <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Integración del Consejo</h1>
     <p class="mt-2 text-slate-600 dark:text-slate-400">Puestos y consejales municipales.</p>
-    <div id="council-root" class="mt-10 space-y-12"></div>
-    <p id="council-err" class="mt-4 text-sm text-red-600"></p>
+    <div class="mt-10 rounded-2xl border border-slate-200 bg-card p-4 text-card-foreground dark:border-slate-700 md:p-6">
+      <CouncilTeamIsland client:load />
+    </div>
   </div>
 </BaseLayout>
-
-<script>
-  import { apiUrl } from "../lib/api";
-
-  async function load() {
-    const root = document.getElementById("council-root");
-    const err = document.getElementById("council-err");
-    if (!root) return;
-    try {
-      const res = await fetch(apiUrl("/api/council"));
-      const data = await res.json();
-      const positions = data.positions || [];
-      root.innerHTML = "";
-      for (const p of positions) {
-        const section = document.createElement("section");
-        section.className = "rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-900";
-        const members = p.members || [];
-        const cards = members
-          .map(
-            (m: {
-              id: number;
-              full_name: string;
-              bio: string;
-              email: string | null;
-              phone: string | null;
-              photo_key: string | null;
-            }) => {
-              const photo = m.photo_key
-                ? `<img src="${apiUrl("/api/council/photo/" + m.id)}" alt="" class="h-28 w-28 rounded-full object-cover" />`
-                : `<div class="flex h-28 w-28 items-center justify-center rounded-full bg-slate-200 text-slate-500 dark:bg-slate-700">?</div>`;
-              return `
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-start">
-              ${photo}
-              <div>
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">${escapeHtml(m.full_name)}</h3>
-                <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">${escapeHtml(m.bio || "")}</p>
-                ${m.email ? `<p class="mt-2 text-sm"><a class="text-brand hover:underline" href="mailto:${escapeHtml(m.email)}">${escapeHtml(m.email)}</a></p>` : ""}
-                ${m.phone ? `<p class="mt-1 text-sm text-slate-600">${escapeHtml(m.phone)}</p>` : ""}
-              </div>
-            </div>`;
-            }
-          )
-          .join('<div class="my-6 border-t border-slate-200 dark:border-slate-700"></div>');
-        section.innerHTML = `
-          <h2 class="text-xl font-bold text-brand dark:text-brand-muted">${escapeHtml(p.name)}</h2>
-          <div class="mt-6 space-y-6">${cards || "<p class=\"text-slate-500\">Sin consejales asignados.</p>"}</div>
-        `;
-        root.appendChild(section);
-      }
-      if (positions.length === 0) root.innerHTML = "<p>No hay datos cargados.</p>";
-    } catch {
-      if (err) err.textContent = "Error al cargar el consejo.";
-    }
-  }
-
-  function escapeHtml(s: string) {
-    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-  }
-
-  load();
-</script>

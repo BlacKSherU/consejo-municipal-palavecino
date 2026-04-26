@@ -141,8 +141,8 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
           const base = getApiBase();
           if ((res.status === 405 || res.status === 404) && !base) {
             err.innerHTML = [
-              `<strong>Error ${res.status}</strong> (respuesta no JSON): suele indicar que el POST fue a Pages sin API.`,
-              ` Configura <code class="text-[11px]">PUBLIC_API_URL</code> en el build de Pages con la URL del Worker y redespiega.`,
+              `<strong>Error ${res.status}<\\/strong> (respuesta no JSON): suele indicar que el POST fue a Pages sin API.`,
+              ` Configura <code class="text-[11px]">PUBLIC_API_URL<\\/code> en el build de Pages con la URL del Worker y redespiega.`,
             ].join("");
           } else {
             err.textContent = `Respuesta no JSON (${res.status}). ¿URL correcta? ${loginUrl.slice(0, 80)}…`;
@@ -155,8 +155,8 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
           const base = getApiBase();
           if ((res.status === 405 || res.status === 404) && !base) {
             err.innerHTML = [
-              `<strong>Error ${res.status}</strong>: el navegador envió el login a <code class="text-[11px]">${window.location.origin}/api/…</code> (este sitio en Pages no tiene el API).`,
-              ` En Cloudflare Pages → Settings → Environment variables → Production, define <code class="text-[11px]">PUBLIC_API_URL</code> = la URL de tu Worker (https://…workers.dev, sin / al final) y vuelve a desplegar.`,
+              `<strong>Error ${res.status}<\\/strong>: el navegador envió el login a <code class="text-[11px]">${window.location.origin}/api/…<\\/code> (este sitio en Pages no tiene el API).`,
+              ` En Cloudflare Pages → Settings → Environment variables → Production, define <code class="text-[11px]">PUBLIC_API_URL<\\/code> = la URL de tu Worker (https://…workers.dev, sin / al final) y vuelve a desplegar.`,
             ].join("");
           } else if (res.status === 405 && base) {
             err.textContent =
@@ -173,9 +173,9 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
       const msg = e instanceof Error ? e.message : String(e);
       if (err) {
         err.innerHTML = [
-          `<strong>Error de red / CORS</strong> (${msg}).`,
-          `URL intentada: <code class="break-all text-[11px]">${loginUrl}</code>`,
-          `<br />Comprueba: (1) PUBLIC_API_URL en Pages = URL del Worker sin / final; (2) en el Worker, variable CORS_ORIGIN = <code>https://${window.location.host}</code> (mismo protocolo y host que esta página).`,
+          `<strong>Error de red / CORS<\\/strong> (${msg}).`,
+          `URL intentada: <code class="break-all text-[11px]">${loginUrl}<\\/code>`,
+          `<br>Comprueba: (1) PUBLIC_API_URL en Pages = URL del Worker sin / final; (2) en el Worker, variable CORS_ORIGIN = <code>https://${window.location.host}<\\/code> (mismo protocolo y host que esta página).`,
         ].join(" ");
       }
     }

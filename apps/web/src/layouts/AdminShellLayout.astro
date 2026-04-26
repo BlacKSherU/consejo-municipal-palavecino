@@ -168,10 +168,10 @@ const apiBase = getPublicApiUrlForBuild();
           try {
             const r = await fetch(apiUrl("/health"));
             statusEl.innerHTML = r.ok
-              ? `<span class="text-emerald-600 dark:text-emerald-400">API en línea</span> · <code class="text-xs opacity-80">${base}</code>`
-              : `<span class="text-amber-600">API respondió con error</span> · <code class="text-xs">${base}</code>`;
+              ? `<span class="text-emerald-600 dark:text-emerald-400">API en línea<\\/span> · <code class="text-xs opacity-80">${base}<\\/code>`
+              : `<span class="text-amber-600">API respondió con error<\\/span> · <code class="text-xs">${base}<\\/code>`;
           } catch {
-            statusEl.innerHTML = `<span class="text-red-600 dark:text-red-400">No se pudo conectar al API</span> · <code class="text-xs break-all">${base}</code> · Configura PUBLIC_API_URL en Cloudflare Pages y CORS_ORIGIN en el Worker.`;
+            statusEl.innerHTML = `<span class="text-red-600 dark:text-red-400">No se pudo conectar al API<\\/span> · <code class="text-xs break-all">${base}<\\/code> · Configura PUBLIC_API_URL en Cloudflare Pages y CORS_ORIGIN en el Worker.`;
           }
         }
       }

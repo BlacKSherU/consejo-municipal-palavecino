@@ -35,9 +35,9 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
       const n = await res.json();
       document.title = n.title + " — Consejo Municipal de Palavecino";
       root.innerHTML = `
-        <h1 class="text-3xl font-bold text-slate-900 dark:text-white">${escapeHtml(n.title)}</h1>
-        <p class="mt-2 text-sm text-slate-500">${escapeHtml(n.published_at || "")}</p>
-        <div class="prose prose-slate mt-8 max-w-none dark:prose-invert">${marked.parse(n.body || "")}</div>
+        <h1 class="text-3xl font-bold text-slate-900 dark:text-white">${escapeHtml(n.title)}<\\/h1>
+        <p class="mt-2 text-sm text-slate-500">${escapeHtml(n.published_at || "")}<\\/p>
+        <div class="prose prose-slate mt-8 max-w-none dark:prose-invert">${marked.parse(n.body || "")}<\\/div>
       `;
     } catch {
       root.innerHTML = "<p>Error al cargar la noticia.</p>";

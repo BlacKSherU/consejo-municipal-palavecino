@@ -1,0 +1,87 @@
+.home-hero {
+  @apply relative overflow-hidden bg-hero-light dark:bg-hero-dark;
+}
+.home-hero-blur-l {
+  @apply pointer-events-none absolute -left-32 top-20 h-72 w-72 rounded-full bg-brand/20 blur-3xl dark:bg-brand/30;
+}
+.home-hero-blur-r {
+  @apply pointer-events-none absolute -right-24 bottom-10 h-80 w-80 rounded-full bg-brand-teal/20 blur-3xl dark:bg-brand-teal/25;
+}
+.home-hero-inner {
+  @apply relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24 lg:flex lg:items-center lg:gap-12 lg:py-28 lg:px-8;
+}
+.home-hero-copy {
+  @apply max-w-2xl flex-1;
+}
+.home-hero-badge {
+  @apply mb-4 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-white/70 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-brand shadow-sm dark:border-brand-muted/30 dark:bg-slate-900/60 dark:text-brand-muted;
+}
+.home-hero-dot {
+  @apply h-1.5 w-1.5 animate-pulse rounded-full bg-brand-teal;
+}
+.home-hero-title {
+  @apply text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-6xl dark:text-white;
+}
+.home-hero-title-gradient {
+  @apply bg-brand-gradient bg-clip-text text-transparent;
+}
+.home-hero-title-line {
+  @apply mt-2 block text-slate-800 dark:text-slate-100;
+}
+.home-hero-lead {
+  @apply mt-6 text-lg leading-relaxed text-slate-600 dark:text-slate-300;
+}
+.home-hero-actions {
+  @apply mt-10 flex flex-wrap gap-4;
+}
+.home-btn-primary {
+  @apply inline-flex items-center justify-center rounded-xl bg-brand px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand dark:shadow-brand/20;
+}
+.home-btn-secondary {
+  @apply inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white/80 px-6 py-3 text-sm font-semibold text-slate-800 backdrop-blur transition hover:border-brand/40 hover:bg-white dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:border-brand-muted/50;
+}
+.home-hero-aside {
+  @apply relative mt-14 flex flex-1 justify-center lg:mt-0;
+}
+.home-hero-card {
+  @apply relative aspect-square w-full max-w-md animate-float rounded-3xl border border-white/50 bg-white/40 p-8 shadow-2xl shadow-brand/10 backdrop-blur-md dark:border-slate-700/50 dark:bg-slate-900/40 dark:shadow-brand/5;
+}
+.home-hero-logo {
+  @apply mx-auto h-48 w-48 opacity-90 dark:opacity-100;
+}
+.home-hero-card-text {
+  @apply mt-6 text-center text-sm font-medium text-slate-600 dark:text-slate-300;
+}
+.home-instagram {
+  @apply border-y border-slate-200 bg-white py-16 dark:border-slate-800 dark:bg-slate-900;
+}
+.home-instagram-inner {
+  @apply mx-auto max-w-6xl px-4 sm:px-6 lg:px-8;
+}
+.home-instagram-h2 {
+  @apply text-2xl font-bold text-slate-900 dark:text-white;
+}
+.home-instagram-lead {
+  @apply mt-2 text-slate-600 dark:text-slate-400;
+}
+.home-ig-grid {
+  @apply mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3;
+}
+.home-ig-status {
+  @apply mt-4 text-sm text-slate-500;
+}
+.home-mission {
+  @apply py-16 dark:bg-slate-950;
+}
+.home-mission-inner {
+  @apply mx-auto max-w-6xl px-4 sm:px-6 lg:px-8;
+}
+.home-mission-copy {
+  @apply mx-auto max-w-3xl text-center;
+}
+.home-mission-h2 {
+  @apply text-3xl font-bold tracking-tight text-slate-900 dark:text-white;
+}
+.home-mission-text {
+  @apply mt-4 text-lg text-slate-600 dark:text-slate-300;
+}
