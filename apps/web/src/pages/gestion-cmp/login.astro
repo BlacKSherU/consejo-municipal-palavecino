@@ -41,7 +41,7 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
         class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-800/80 px-3 py-2.5 text-white placeholder-slate-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
       />
     </div>
-    <p id="login-err" class="text-sm text-red-400"></p>
+    <p id="login-err" class="whitespace-pre-wrap text-sm text-red-400"></p>
     <button
       type="submit"
       class="w-full rounded-xl bg-brand px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand/30 transition hover:bg-brand-dark"
@@ -140,10 +140,9 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
         if (err) {
           const base = getApiBase();
           if ((res.status === 405 || res.status === 404) && !base) {
-            err.innerHTML = [
-              `<strong>Error ${res.status}<\\/strong> (respuesta no JSON): suele indicar que el POST fue a Pages sin API.`,
-              ` Configura <code class="text-[11px]">PUBLIC_API_URL<\\/code> en el build de Pages con la URL del Worker y redespiega.`,
-            ].join("");
+            err.textContent =
+              `Error ${res.status} (respuesta no JSON): suele indicar que el POST fue a Pages sin API. ` +
+              `En Cloudflare Pages → Settings → Environment variables → Production, define PUBLIC_API_URL = la URL del Worker (https://…workers.dev, sin / al final) y vuelve a desplegar.`;
           } else {
             err.textContent = `Respuesta no JSON (${res.status}). ¿URL correcta? ${loginUrl.slice(0, 80)}…`;
           }
@@ -154,10 +153,9 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
         if (err) {
           const base = getApiBase();
           if ((res.status === 405 || res.status === 404) && !base) {
-            err.innerHTML = [
-              `<strong>Error ${res.status}<\\/strong>: el navegador envió el login a <code class="text-[11px]">${window.location.origin}/api/…<\\/code> (este sitio en Pages no tiene el API).`,
-              ` En Cloudflare Pages → Settings → Environment variables → Production, define <code class="text-[11px]">PUBLIC_API_URL<\\/code> = la URL de tu Worker (https://…workers.dev, sin / al final) y vuelve a desplegar.`,
-            ].join("");
+            err.textContent =
+              `Error ${res.status}: el login se envió a ${window.location.origin}/api/… (Pages no sirve el API). ` +
+              `En Pages → Environment variables → Production, define PUBLIC_API_URL = URL del Worker (https://…workers.dev, sin / final) y redespiega.`;
           } else if (res.status === 405 && base) {
             err.textContent =
               "Error 405: el servidor no acepta POST en /api/auth/login. Comprueba que PUBLIC_API_URL apunta al Worker correcto.";
@@ -172,11 +170,22 @@ import AdminLoginLayout from "../../layouts/AdminLoginLayout.astro";
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       if (err) {
-        err.innerHTML = [
-          `<strong>Error de red / CORS<\\/strong> (${msg}).`,
-          `URL intentada: <code class="break-all text-[11px]">${loginUrl}<\\/code>`,
-          `<br>Comprueba: (1) PUBLIC_API_URL en Pages = URL del Worker sin / final; (2) en el Worker, variable CORS_ORIGIN = <code>https://${window.location.host}<\\/code> (mismo protocolo y host que esta página).`,
-        ].join(" ");
+        const origin = `${window.location.protocol}//${window.location.host}`;
+        let workerOrigin = "https://TU-WORKER.workers.dev";
+        try {
+          workerOrigin = new URL(loginUrl).origin;
+        } catch {
+          /* keep placeholder */
+        }
+        err.textContent =
+          `Error de red / CORS (${msg}).\n\n` +
+          `URL intentada: ${loginUrl}\n\n` +
+          `1) En Cloudflare Pages → Environment variables → Production: PUBLIC_API_URL = ${workerOrigin} (sin / al final). Guarda y redespiega Pages.\n\n` +
+          `2) En el Worker (Dashboard → tu API → Settings → Variables): CORS_ORIGIN debe incluir exactamente el origen de esta página:\n` +
+          `   ${origin}\n` +
+          `   Varios orígenes: sepáralos con coma, sin espacio tras la coma. Ejemplo:\n` +
+          `   ${origin},http://localhost:4321\n\n` +
+          `3) Guarda variables del Worker y vuelve a desplegar el Worker si hace falta. Luego recarga esta página (Ctrl+F5).`;
       }
     }
   });

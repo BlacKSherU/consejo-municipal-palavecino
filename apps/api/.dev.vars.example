@@ -2,8 +2,10 @@
 # Wrangler carga .dev.vars en `wrangler dev`.
 
 JWT_SECRET=local-dev-cambiar
-# CORS_ORIGIN debe ser la URL del sitio en Pages (https://...), no la del Worker.
-# CORS_ORIGIN=https://tu-proyecto.pages.dev
+# CORS_ORIGIN = origen del sitio Astro/Pages (https://…), NO la URL del Worker.
+# Si falta o no coincide EXACTAMENTE con la barra del navegador, verás "NetworkError when attempting to fetch".
+# Varios orígenes (coma, sin espacios):
+# CORS_ORIGIN=https://tu-proyecto.pages.dev,http://localhost:4321,http://127.0.0.1:4321
 
 # Opcional — Instagram Graph API
 # META_ACCESS_TOKEN=

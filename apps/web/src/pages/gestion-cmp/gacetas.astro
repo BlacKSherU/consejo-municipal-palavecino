@@ -35,59 +35,6 @@ import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
 </AdminShellLayout>
 
 <script>
-  import { apiFetch, apiUrl } from "../../lib/api";
-
-  async function loadList() {
-    const root = document.getElementById("gazette-list");
-    if (!root) return;
-    const res = await apiFetch("/api/admin/gazettes");
-    const data = await res.json();
-    const items = data.items || [];
-    root.innerHTML = "";
-    for (const g of items) {
-      const row = document.createElement("div");
-      row.className = "flex flex-wrap items-center justify-between gap-2 rounded-lg border border-slate-200 p-3 dark:border-slate-700";
-      row.innerHTML = `
-        <div>
-          <p class="font-medium">${escapeHtml(g.title)}<\\/p>
-          <p class="text-xs text-slate-500">${escapeHtml(g.issue_number || "")} · ${escapeHtml(g.published_at || "")}<\\/p>
-        <\\/div>
-        <div class="flex gap-3">
-          <a class="text-sm text-brand hover:underline" href="${apiUrl("/api/gazettes/" + g.id + "/download")}" target="_blank">Ver PDF<\\/a>
-          <button type="button" class="text-sm text-red-600 hover:underline" data-del="${g.id}">Eliminar<\\/button>
-        <\\/div>
-      `;
-      root.appendChild(row);
-      row.querySelector(`[data-del="${g.id}"]`)?.addEventListener("click", async () => {
-        if (!confirm("¿Eliminar esta gaceta?")) return;
-        await apiFetch("/api/admin/gazettes/" + g.id, { method: "DELETE" });
-        loadList();
-      });
-    }
-  }
-
-  function escapeHtml(s: string) {
-    return String(s || "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/"/g, "&quot;");
-  }
-
-  document.getElementById("gazette-form")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const fd = new FormData(form);
-    const res = await apiFetch("/api/admin/gazettes", {
-      method: "POST",
-      body: fd,
-    });
-    if (res.ok) {
-      form.reset();
-      loadList();
-    } else {
-      alert("Error al subir");
-    }
-  });
-
-  loadList();
+  import { initAdminGacetasPage } from "../../scripts/admin-gacetas-page";
+  initAdminGacetasPage();
 </script>

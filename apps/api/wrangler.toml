@@ -19,9 +19,11 @@ bucket_name = "cmp-assets"
 [vars]
 JWT_SECRET = "local-dev-jwt-secret-change-in-production"
 
-# CORS_ORIGIN: URL del sitio en Cloudflare Pages (https://tu-app.pages.dev), NO la del Worker.
-# En producción configúrala en el Dashboard (recomendado) o descomenta:
-# CORS_ORIGIN = "https://tu-proyecto.pages.dev"
+# CORS_ORIGIN: origen del FRONT (Cloudflare Pages), NO la URL del Worker. Sin esto, el login desde
+# *.pages.dev falla con "NetworkError / CORS". Varios orígenes: coma sin espacios.
+# Ejemplo producción + local:
+# CORS_ORIGIN = "https://consejo-municipal-palavecino.pages.dev,http://localhost:4321"
+# En producción configúrala en el Dashboard del Worker (recomendado) o en .dev.vars local.
 
 # Secretos (nunca en git): wrangler secret put NOMBRE
 #   JWT_SECRET          — en producción sustituye el [vars] de arriba si usas secret
