@@ -70,6 +70,14 @@ npm run seed:demo
 npx wrangler d1 execute cmp-db --remote --file=seed-demo.sql
 ```
 
+El SQL se escribe en **`apps/api/seed-demo.sql`**. Desde la **raíz** del repositorio use esa ruta explícitamente, por ejemplo:
+
+```bash
+npx wrangler d1 execute cmp-db --remote --file=apps/api/seed-demo.sql
+```
+
+Si prefiere `--file=seed-demo.sql` estando en la raíz, copie antes el generado: `cp apps/api/seed-demo.sql seed-demo.sql`. El repositorio puede incluir un `seed-demo.sql` en la raíz como **copia**; quedará desactualizado hasta volver a copiarlo. Evite aplicar un `seed-demo.sql` viejo: en D1 solo verá el contenido de ese fichero, no el del seeder de `scripts/`.
+
 Por defecto: `admin@demo.cmp.test` / `DemoCmp2025!`. Personaliza con `SEED_DEMO_EMAIL` y `SEED_DEMO_PASSWORD`. Las gacetas demo apuntan a claves R2 inexistentes: se listan en el sitio; la descarga fallará hasta subir PDFs reales.
 
 ### Instagram (Meta)

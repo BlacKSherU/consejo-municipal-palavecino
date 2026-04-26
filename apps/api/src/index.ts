@@ -391,15 +391,18 @@ app.get("/api/public/ui", async (c) => {
 
 // --- Public: news (q= búsqueda; page+perPage paginación; limit+offset vista previa) ---
 app.get("/api/news", async (c) => {
+  c.header("Cache-Control", "no-store");
   const q = (c.req.query("q") ?? "").trim();
   const pageQ = c.req.query("page");
   const perPageQ = c.req.query("perPage") ?? c.req.query("per_page");
   const limitQ = c.req.query("limit");
   const offsetQ = c.req.query("offset");
-  const hasPage = pageQ != null && pageQ !== "";
-  const hasLimit = limitQ != null && limitQ !== "";
-
-  const perPage = Math.min(50, Math.max(1, parseInt(String(perPageQ ?? "10"), 10) || 10));
+  /** Inicio / islas: limit= explícito (debe imponerse antes que page=). */
+  const hasLimit = limitQ != null && String(limitQ).trim() !== "";
+  /** Búsqueda: page= y/o perPage= (perPage solo ya pagina en página 1). */
+  const wantsPagination =
+    (pageQ != null && String(pageQ).trim() !== "") || (perPageQ != null && String(perPageQ).trim() !== "");
+  const perPageNum = Math.min(50, Math.max(1, parseInt(String(perPageQ ?? "10"), 10) || 10));
   const orderSql =
     "ORDER BY CASE WHEN published_at IS NULL THEN 1 ELSE 0 END, datetime(published_at) DESC, id DESC";
 
@@ -437,25 +440,25 @@ app.get("/api/news", async (c) => {
     });
   }
 
-  if (hasPage) {
-    const page = Math.max(1, parseInt(String(pageQ), 10) || 1);
-    const offset = (page - 1) * perPage;
-    const listBinds = [...binds, perPage, offset];
-    const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<NewsRow>();
-    return c.json({
-      items: mapNewsList(rows.results),
-      total,
-      page,
-      perPage,
-      totalPages: Math.max(1, Math.ceil(total / perPage)),
-    });
-  }
   if (hasLimit) {
     const limit = Math.min(100, Math.max(1, parseInt(String(limitQ), 10) || 10));
     const offset = Math.max(0, parseInt(String(offsetQ ?? "0"), 10) || 0);
     const listBinds = [...binds, limit, offset];
     const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<NewsRow>();
     return c.json({ items: mapNewsList(rows.results), total, limit, offset });
+  }
+  if (wantsPagination) {
+    const page = Math.max(1, parseInt(String(pageQ ?? "1"), 10) || 1);
+    const offset = (page - 1) * perPageNum;
+    const listBinds = [...binds, perPageNum, offset];
+    const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<NewsRow>();
+    return c.json({
+      items: mapNewsList(rows.results),
+      total,
+      page,
+      perPage: perPageNum,
+      totalPages: Math.max(1, Math.ceil(total / perPageNum)),
+    });
   }
   const rows = await c.env.DB.prepare(baseSelect).bind(...binds).all<NewsRow>();
   return c.json({ items: mapNewsList(rows.results), total });
@@ -509,14 +512,16 @@ app.get("/api/council", async (c) => {
 
 // --- Public: gazettes list (mismos parámetros q / page / perPage / limit+offset) ---
 app.get("/api/gazettes", async (c) => {
+  c.header("Cache-Control", "no-store");
   const q = (c.req.query("q") ?? "").trim();
   const pageQ = c.req.query("page");
   const perPageQ = c.req.query("perPage") ?? c.req.query("per_page");
   const limitQ = c.req.query("limit");
   const offsetQ = c.req.query("offset");
-  const hasPage = pageQ != null && pageQ !== "";
-  const hasLimit = limitQ != null && limitQ !== "";
-  const perPage = Math.min(50, Math.max(1, parseInt(String(perPageQ ?? "10"), 10) || 10));
+  const hasLimit = limitQ != null && String(limitQ).trim() !== "";
+  const wantsPagination =
+    (pageQ != null && String(pageQ).trim() !== "") || (perPageQ != null && String(perPageQ).trim() !== "");
+  const perPageNum = Math.min(50, Math.max(1, parseInt(String(perPageQ ?? "10"), 10) || 10));
   const orderSql = "ORDER BY datetime(published_at) DESC, id DESC";
 
   let whereSql = "1=1";
@@ -546,25 +551,25 @@ app.get("/api/gazettes", async (c) => {
     mime: string;
   };
 
-  if (hasPage) {
-    const page = Math.max(1, parseInt(String(pageQ), 10) || 1);
-    const offset = (page - 1) * perPage;
-    const listBinds = [...binds, perPage, offset];
-    const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<GazRow>();
-    return c.json({
-      items: rows.results ?? [],
-      total,
-      page,
-      perPage,
-      totalPages: Math.max(1, Math.ceil(total / perPage)),
-    });
-  }
   if (hasLimit) {
     const limit = Math.min(100, Math.max(1, parseInt(String(limitQ), 10) || 10));
     const offset = Math.max(0, parseInt(String(offsetQ ?? "0"), 10) || 0);
     const listBinds = [...binds, limit, offset];
     const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<GazRow>();
     return c.json({ items: rows.results ?? [], total, limit, offset });
+  }
+  if (wantsPagination) {
+    const page = Math.max(1, parseInt(String(pageQ ?? "1"), 10) || 1);
+    const offset = (page - 1) * perPageNum;
+    const listBinds = [...binds, perPageNum, offset];
+    const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<GazRow>();
+    return c.json({
+      items: rows.results ?? [],
+      total,
+      page,
+      perPage: perPageNum,
+      totalPages: Math.max(1, Math.ceil(total / perPageNum)),
+    });
   }
   const rows = await c.env.DB.prepare(baseSelect).bind(...binds).all<GazRow>();
   return c.json({ items: rows.results ?? [], total });

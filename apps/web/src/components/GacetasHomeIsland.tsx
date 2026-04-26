@@ -35,10 +35,10 @@ export default function GacetasHomeIsland() {
     let c = false;
     (async () => {
       try {
-        const res = await fetch(apiUrl("/api/gazettes?limit=3&offset=0"));
+        const res = await fetch(apiUrl("/api/gazettes?limit=10&offset=0"), { cache: "no-store" });
         const data = (await res.json()) as { items?: Gazette[]; total?: number };
         if (!c) {
-          setRows(data.items ?? []);
+          setRows((data.items ?? []).slice(0, 10));
           setTotal(data.total ?? 0);
         }
       } catch {
@@ -120,7 +120,7 @@ export default function GacetasHomeIsland() {
         </table>
       </div>
 
-      {!loading && total > 3 && (
+      {!loading && total > 10 && (
         <a
           href="/gacetas/buscar"
           className="group relative flex min-h-[8rem] w-full shrink-0 flex-col items-center justify-center gap-1 rounded-2xl border border-dashed border-slate-300/90 bg-gradient-to-b from-slate-50/90 via-slate-50/40 to-white px-3 py-6 text-center shadow-inner transition hover:border-brand/50 hover:from-slate-100/90 dark:border-slate-600/80 dark:from-slate-800/50 dark:via-slate-900/30 dark:to-slate-900/50 dark:hover:border-brand/40 lg:ml-1 lg:min-h-0 lg:w-28 lg:rounded-l-none lg:border-l-0"

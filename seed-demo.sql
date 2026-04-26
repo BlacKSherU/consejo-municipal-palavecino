@@ -9,14 +9,38 @@ DELETE FROM news;
 DELETE FROM admin_users;
 DELETE FROM site_content;
 
-INSERT INTO site_content (key, body) VALUES ('about', '# Consejo Municipal (demo)
+INSERT INTO site_content (key, body) VALUES
+  ('about_mission', 'Ejercer la función legislativa local y el control político del municipio Palavecino, creando y reformando ordenanzas de manera participativa junto a las comunidades. Su labor se rige por el compromiso de legislar con "Honestidad, Eficiencia y Buen Servicio", buscando dar respuestas normativas a las necesidades de servicios públicos, ordenamiento territorial y autonomía financiera de los ciudadanos.'),
+  ('about_vision', 'Ser el epicentro de la autonomía municipal que impulse la transformación y modernización de Palavecino frente a su acelerado crecimiento demográfico. Aspira a consolidar una ciudad funcional, segura y próspera mediante la sostenibilidad financiera, la resiliencia urbana, la modernización digital de su marco normativo y la protección rigurosa de su patrimonio histórico y ambiental, como el Parque Nacional Terepaima.'),
+  ('about', '## Concejo Municipal Bolivariano de Palavecino
 
-Este **texto es de demostración** para ajustar estilos. Palavecino — contenido 100% ficticio.
+## Información General
+El **Consejo Municipal de Palavecino** es el órgano deliberante y depositario de la potestad legislativa local del municipio Palavecino, estado Lara. Su sede principal se encuentra en el Edificio de los Poderes Públicos, ubicado en la calle Juan de Dios Ponte, frente a la Plaza Aquilino Juárez (o Plaza La Cruz), en el centro neurálgico de Cabudare.
 
-## Misión (ejemplo)
-Servir a la comunidad con transparencia.');
+* **Lema Institucional:** "¡Legislando con Honestidad, Eficiencia y Buen Servicio!"
 
-INSERT INTO admin_users (email, password_record) VALUES ('admin@demo.cmp.test', 'pbkdf2:100000:LWF7KIfflpEUtv1N9cD3AA==:eWUgWfIH7g1lknONBO49Z4OMev+Xc7dvB3FKZ0HG+JM=');
+## Composición y Directiva
+El cuerpo legislativo está conformado por un total de **nueve (9) concejales**. Históricamente ha reflejado las transiciones políticas del país, y para el período legislativo 2024, su composición cuenta con **siete (7) concejales pertenecientes a la bancada del PSUV - GPP y dos (2) de los partidos de oposición**.
+
+Para el período legislativo 2023, la Junta Directiva se instaló de la siguiente manera:
+* **Presidenta:** Edderick Roxana Escalona (educadora).
+* **Vicepresidente:** José Timaure.
+* **Secretaría:** Flor Ramírez (Secretaria) y Zubely Mendoza (Subsecretaria).
+
+## Funciones y Competencias Principales
+De acuerdo con la Ley Orgánica del Poder Público Municipal y las dinámicas locales, el Concejo Municipal tiene las siguientes responsabilidades primordiales:
+
+* **Creación de Ordenanzas:** Iniciar, consultar, discutir y sancionar proyectos de ordenanzas que regulan la vida local, abarcando desde la convivencia ciudadana y el ordenamiento urbano, hasta las actividades económicas y de hacienda pública.
+* **Control Político y Fiscal:** Ejercer funciones de control sobre el gobierno ejecutivo local (Alcaldía) y la administración pública municipal.
+* **Participación Ciudadana:** Garantizar y promover la inclusión del pueblo en las decisiones normativas mediante mecanismos como consultas públicas, mesas de trabajo y recepción de propuestas vecinales.
+* **Guardián de la Identidad:** Legislar para la preservación del patrimonio histórico y la promoción de los símbolos patrios locales, como la bandera, el escudo y elementos representativos como el Parque Nacional Terepaima o la histórica Ceiba de Cabudare.
+
+## Hitos Legislativos y Desafíos Recientes
+* **Modernización Tributaria:** Entre 2022 y 2024, el Concejo ha tenido una actividad legislativa intensa para adaptar sus ordenanzas a la normativa nacional (LOCAPTEM), modernizando los tributos y estableciendo la **Unidad de Cuenta Dinámica (UCD)** para proteger la recaudación de la volatilidad cambiaria.
+* **Gestión de Crisis y Servicios Públicos:** El Concejo enfrenta el reto monumental de la crisis hídrica que afecta a más de **124.000 habitantes** por la inoperatividad de pozos profundos, debatiendo la creación de fondos o alianzas para la infraestructura del agua, indispensable para que el municipio no paralice su crecimiento inmobiliario.
+');
+
+INSERT INTO admin_users (email, password_record) VALUES ('admin@demo.cmp.test', 'pbkdf2:100000:icI1XbmkSXw6j6XZuH88ow==:F6tE+xbpafmFf13psCCRnzp8FSOX+lg2Kda5T4Aw5YU=');
 
 INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('crisis-hidrica-palavecino-habitantes-sin-agua', 'Crisis hídrica en Palavecino: Más de 124 mil habitantes sin acceso regular al agua potable', 'El municipio Palavecino enfrenta una severa crisis de agua potable. El Concejo Municipal evalúa una inversión millonaria para reactivar pozos y mitigar el impacto que afecta a un tercio de la población debido a la desinversión y daños ambientales.', '> **Aviso (demo / seeder):** las cifras y propuestas son **contenido ficticio** para maquetar el sitio; no sustituyen reportes técnicos ni comunicados oficiales de la alcaldía.
 
@@ -225,6 +249,46 @@ cifra_31: solo_illustrativa
 ---
 *Fin (seed) — operativos / Ordenanza de convivencia / Palavecino (demo).
 ', 1, '2026-04-20T15:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-1', 'Noticia de relleno 1', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-02T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-2', 'Noticia de relleno 2', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-03T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-3', 'Noticia de relleno 3', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-04T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-4', 'Noticia de relleno 4', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-05T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-5', 'Noticia de relleno 5', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-06T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-6', 'Noticia de relleno 6', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-07T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-7', 'Noticia de relleno 7', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-08T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-8', 'Noticia de relleno 8', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-09T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-9', 'Noticia de relleno 9', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-10T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-10', 'Noticia de relleno 10', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-11T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-11', 'Noticia de relleno 11', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-12T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-12', 'Noticia de relleno 12', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-13T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-13', 'Noticia de relleno 13', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-14T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-14', 'Noticia de relleno 14', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-15T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-15', 'Noticia de relleno 15', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-16T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-16', 'Noticia de relleno 16', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-17T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-17', 'Noticia de relleno 17', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-18T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-18', 'Noticia de relleno 18', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-19T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-19', 'Noticia de relleno 19', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-20T00:00:00Z');
+INSERT INTO news (slug, title, excerpt, body, published, published_at) VALUES ('noticia-relleno-20', 'Noticia de relleno 20', '', '![Relleno](https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=800&h=500&fit=crop&auto=format)
+', 1, '2010-01-21T00:00:00Z');
 
 INSERT INTO council_positions (id, name, sort_order) VALUES
   (1, 'Presidencia', 0),
@@ -256,6 +320,31 @@ INSERT INTO gazettes (title, issue_number, published_at, r2_key, file_name, file
     0,
     'application/pdf'
   );
+
+INSERT INTO gazettes (title, issue_number, published_at, r2_key, file_name, file_size, mime) VALUES
+  ('Gaceta de relleno 1 (prueba)', 'GO-FILL-001', '2008-01-04T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-1-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 2 (prueba)', 'GO-FILL-002', '2008-01-07T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-2-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 3 (prueba)', 'GO-FILL-003', '2008-01-10T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-3-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 4 (prueba)', 'GO-FILL-004', '2008-01-13T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-4-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 5 (prueba)', 'GO-FILL-005', '2008-01-16T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-5-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 6 (prueba)', 'GO-FILL-006', '2008-01-19T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-6-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 7 (prueba)', 'GO-FILL-007', '2008-01-22T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-7-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 8 (prueba)', 'GO-FILL-008', '2008-01-25T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-8-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 9 (prueba)', 'GO-FILL-009', '2008-01-28T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-9-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 10 (prueba)', 'GO-FILL-010', '2008-01-31T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-10-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 11 (prueba)', 'GO-FILL-011', '2008-02-03T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-11-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 12 (prueba)', 'GO-FILL-012', '2008-02-06T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-12-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 13 (prueba)', 'GO-FILL-013', '2008-02-09T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-13-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 14 (prueba)', 'GO-FILL-014', '2008-02-12T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-14-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 15 (prueba)', 'GO-FILL-015', '2008-02-15T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-15-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 16 (prueba)', 'GO-FILL-016', '2008-02-18T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-16-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 17 (prueba)', 'GO-FILL-017', '2008-02-21T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-17-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 18 (prueba)', 'GO-FILL-018', '2008-02-24T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-18-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 19 (prueba)', 'GO-FILL-019', '2008-02-27T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-19-demo.pdf', 0, 'application/pdf'),
+  ('Gaceta de relleno 20 (prueba)', 'GO-FILL-020', '2008-03-01T00:00:00Z', 'gacetas/demo/gaceta-enero-2025.pdf', 'Gaceta-relleno-20-demo.pdf', 0, 'application/pdf');
+
+
+
 
 UPDATE instagram_cache SET payload = '[]', error = NULL, fetched_at = datetime('now') WHERE id = 1;
 

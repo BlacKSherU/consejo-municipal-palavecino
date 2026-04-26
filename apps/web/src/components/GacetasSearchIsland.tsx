@@ -57,7 +57,7 @@ export default function GacetasSearchIsland() {
       u.set("page", String(p));
       u.set("perPage", String(PER));
       if (search.trim()) u.set("q", search.trim());
-      const res = await fetch(apiUrl(`/api/gazettes?${u.toString()}`));
+      const res = await fetch(apiUrl(`/api/gazettes?${u.toString()}`), { cache: "no-store" });
       const data = (await res.json()) as {
         items?: Gazette[];
         total?: number;
@@ -65,9 +65,13 @@ export default function GacetasSearchIsland() {
         page?: number;
       };
       setItems(data.items ?? []);
-      setTotal(data.total ?? 0);
+      const t = data.total;
+      const rawTotal = typeof t === "number" && Number.isFinite(t) ? t : 0;
+      setTotal(rawTotal);
       setTotalPages(
-        typeof data.totalPages === "number" ? data.totalPages : Math.max(1, Math.ceil((data.total ?? 0) / PER)),
+        typeof data.totalPages === "number" && Number.isFinite(data.totalPages)
+          ? data.totalPages
+          : Math.max(1, Math.ceil(rawTotal / PER)),
       );
       if (typeof data.page === "number") setPage(data.page);
     } catch {
@@ -153,24 +157,45 @@ export default function GacetasSearchIsland() {
             sectionClassName="py-0"
             emptyMessage="No se encontraron gacetas. Ajuste la búsqueda o el número de edición."
           />
-          {total > 0 && totalPages > 1 && (
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-              <Button type="button" variant="outline" size="sm" disabled={page <= 1} onClick={() => goPage(page - 1)}>
-                Anterior
-              </Button>
-              <span className="px-2 text-sm text-muted-foreground">
-                Página {page} de {totalPages} · hasta {PER} por página
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => goPage(page + 1)}
-              >
-                Siguiente
-              </Button>
-            </div>
+          {total > 0 && (total > PER || totalPages > 1) && (
+            <nav className="mt-8 flex flex-col items-center gap-3" aria-label="Paginación de gacetas">
+              <p className="text-sm text-muted-foreground">
+                {total} edición{total === 1 ? "" : "es"} · hasta {PER} por página
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                <Button type="button" variant="outline" size="sm" disabled={page <= 1} onClick={() => goPage(page - 1)}>
+                  Anterior
+                </Button>
+                <span className="px-1 text-sm tabular-nums text-foreground">
+                  {page} / {totalPages}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() => goPage(page + 1)}
+                >
+                  Siguiente
+                </Button>
+              </div>
+              {totalPages > 1 && totalPages <= 12 && (
+                <div className="flex max-w-full flex-wrap justify-center gap-1.5">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                    <Button
+                      key={n}
+                      type="button"
+                      size="sm"
+                      variant={n === page ? "default" : "outline"}
+                      className="min-w-9"
+                      onClick={() => goPage(n)}
+                    >
+                      {n}
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </nav>
           )}
         </>
       )}

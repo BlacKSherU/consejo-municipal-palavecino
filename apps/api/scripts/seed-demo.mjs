@@ -8,9 +8,10 @@
  *
  * Uso:
  *   node scripts/seed-demo.mjs           # solo imprime SQL y credenciales
- *   node scripts/seed-demo.mjs --write  # escribe seed-demo.sql
- *   npx wrangler d1 execute cmp-db --local  --file=seed-demo.sql
- *   npx wrangler d1 execute cmp-db --remote --file=seed-demo.sql
+ *   node scripts/seed-demo.mjs --write  # escribe apps/api/seed-demo.sql
+ *   npx wrangler d1 execute cmp-db --local  --file=seed-demo.sql   # (desde apps/api)
+ *   npx wrangler d1 execute cmp-db --remote --file=apps/api/seed-demo.sql  (desde la raíz del monorepo)
+ *   Si aplica un seed-demo.sql desde la raíz, debe ser copia de apps/api/seed-demo.sql o apuntar a él.
  */
 import { pbkdf2Sync, randomBytes } from "node:crypto";
 import { writeFileSync } from "node:fs";

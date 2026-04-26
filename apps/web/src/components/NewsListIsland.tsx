@@ -43,8 +43,8 @@ export default function NewsListIsland() {
     (async () => {
       try {
         const [newsRes, uiRes] = await Promise.all([
-          fetch(apiUrl("/api/news?limit=3&offset=0")),
-          fetch(apiUrl("/api/public/ui")),
+          fetch(apiUrl("/api/news?limit=3&offset=0"), { cache: "no-store" }),
+          fetch(apiUrl("/api/public/ui"), { cache: "no-store" }),
         ]);
         const data = (await newsRes.json()) as { items?: unknown[]; total?: number };
         let uiMerged = defaultPublicUiConfig;
@@ -52,9 +52,9 @@ export default function NewsListIsland() {
           const u = (await uiRes.json()) as { config?: unknown };
           uiMerged = mergePublicUiFromApi(u.config);
         }
-        const items = data.items || [];
+        const items = (data.items || []).slice(0, 3) as { slug: string; title: string; published_at?: string | null }[];
         setTotalNews(typeof data.total === "number" ? data.total : items.length);
-        const mapped: NewsCard[] = (items as { slug: string; title: string; published_at?: string | null }[]).map((n) => {
+        const mapped: NewsCard[] = items.map((n) => {
           const slug = n.slug;
           const h = [...slug].reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
           const g = GRADS[h % GRADS.length];
