@@ -86,10 +86,17 @@ export default function GacetasSearchIsland() {
   const dateFromRef = useRef("");
   const dateToRef = useRef("");
   const skipNextCloseCommit = useRef(false);
+  /** Evita doble commit: el clic fuera dispara esto antes de onOpenChange (y a veces onSelect al desmontar). */
+  const dateCloseCommittedByOutsidePointer = useRef(false);
+  const rangeStateForCommitRef = useRef<DateRange | undefined>(undefined);
 
   useEffect(() => {
     qInputRef.current = qInput;
   }, [qInput]);
+
+  useEffect(() => {
+    rangeStateForCommitRef.current = range;
+  }, [range]);
 
   useEffect(() => {
     dateFromRef.current = dateFromYmd;
@@ -141,10 +148,6 @@ export default function GacetasSearchIsland() {
       }
     }
   }, []);
-
-  useEffect(() => {
-    rangeRef.current = range;
-  }, [range]);
 
   useEffect(() => {
     const pr = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
@@ -236,7 +239,9 @@ export default function GacetasSearchIsland() {
       skipNextCloseCommit.current = false;
       return;
     }
-    const r = rangeRef.current;
+    const refR = rangeRef.current;
+    const st = rangeStateForCommitRef.current;
+    const r = refR?.from && refR?.to ? refR : st?.from && st?.to ? st : refR;
     const from = toYmd(r?.from);
     const to = toYmd(r?.to);
     const q0 = qInputRef.current;
@@ -280,6 +285,7 @@ export default function GacetasSearchIsland() {
 
   const onDateOpenChange = (o: boolean) => {
     if (o) {
+      dateCloseCommittedByOutsidePointer.current = false;
       if (dateFromYmd && dateToYmd) {
         const dr = { from: parseYmd(dateFromYmd), to: parseYmd(dateToYmd) };
         setRange(dr);
@@ -294,8 +300,12 @@ export default function GacetasSearchIsland() {
     if (shouldBlockPopoverClose()) {
       return;
     }
+    if (!dateCloseCommittedByOutsidePointer.current) {
+      commitDateFilterOnClose();
+    } else {
+      dateCloseCommittedByOutsidePointer.current = false;
+    }
     setDatePopoverOpen(false);
-    commitDateFilterOnClose();
   };
 
   const listItems: List2Item[] = items.map((g) => {
@@ -379,7 +389,14 @@ export default function GacetasSearchIsland() {
                   className="w-auto overflow-hidden p-0"
                   align="start"
                   onPointerDownOutside={(e) => {
-                    if (shouldBlockPopoverClose()) e.preventDefault();
+                    if (shouldBlockPopoverClose()) {
+                      e.preventDefault();
+                      return;
+                    }
+                    // Antes de onOpenChange / desmontaje: a veces el calendario resetea y vacía el rango
+                    // antes de commitear; el clic externo aún no ha borrado el borrador.
+                    commitDateFilterOnClose();
+                    dateCloseCommittedByOutsidePointer.current = true;
                   }}
                   onFocusOutside={(e) => {
                     if (shouldBlockPopoverClose()) e.preventDefault();
