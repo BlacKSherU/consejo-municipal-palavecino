@@ -76,7 +76,9 @@ export default function GacetasSearchIsland() {
   const [items, setItems] = useState<Gazette[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const isInitialRequest = useRef(true);
   const [err, setErr] = useState<string | null>(null);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const qDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -89,7 +91,11 @@ export default function GacetasSearchIsland() {
   }, [dateFromYmd, dateToYmd]);
 
   const load = useCallback(async (search: string, p: number, dFrom: string, dTo: string) => {
-    setLoading(true);
+    if (isInitialRequest.current) {
+      setInitialLoading(true);
+    } else {
+      setRefreshing(true);
+    }
     setErr(null);
     try {
       const u = new URLSearchParams();
@@ -121,7 +127,12 @@ export default function GacetasSearchIsland() {
       setTotal(0);
       setTotalPages(1);
     } finally {
-      setLoading(false);
+      if (isInitialRequest.current) {
+        isInitialRequest.current = false;
+        setInitialLoading(false);
+      } else {
+        setRefreshing(false);
+      }
     }
   }, []);
 
@@ -218,7 +229,6 @@ export default function GacetasSearchIsland() {
     dateToRef.current = to;
     if (from && to) {
       setPage(1);
-      setDatePopoverOpen(false);
       setQ(qInput);
       syncUrl(qInput, 1, from, to);
       void load(qInput, 1, from, to);
@@ -238,12 +248,14 @@ export default function GacetasSearchIsland() {
     void load(qInput, 1, "", "");
   };
 
+  const shouldBlockPopoverClose = () => isRangePartial(rangeRef.current);
+
   const onDateOpenChange = (o: boolean) => {
     if (o) {
       setDatePopoverOpen(true);
       return;
     }
-    if (isRangePartial(rangeRef.current)) {
+    if (shouldBlockPopoverClose()) {
       return;
     }
     setDatePopoverOpen(false);
@@ -316,10 +328,16 @@ export default function GacetasSearchIsland() {
                   className="w-auto overflow-hidden p-0"
                   align="start"
                   onPointerDownOutside={(e) => {
-                    if (isRangePartial(rangeRef.current)) e.preventDefault();
+                    if (shouldBlockPopoverClose()) e.preventDefault();
+                  }}
+                  onFocusOutside={(e) => {
+                    if (shouldBlockPopoverClose()) e.preventDefault();
                   }}
                   onInteractOutside={(e) => {
-                    if (isRangePartial(rangeRef.current)) e.preventDefault();
+                    if (shouldBlockPopoverClose()) e.preventDefault();
+                  }}
+                  onEscapeKeyDown={(e) => {
+                    if (shouldBlockPopoverClose()) e.preventDefault();
                   }}
                 >
                   <div className="p-1">
@@ -351,28 +369,26 @@ export default function GacetasSearchIsland() {
             </div>
           </div>
         </div>
-        {(dateFromYmd || dateToYmd) && (
-          <p className="mt-2 text-xs text-muted-foreground" aria-live="polite">
-            {dateFromYmd && dateToYmd
-              ? `Filtro de fechas: ${dateFromYmd} a ${dateToYmd} (inclusive).`
-              : "Seleccione un día de inicio y otro de fin en el calendario."}
-          </p>
-        )}
       </form>
 
       {err && <p className="mb-4 text-sm text-destructive">{err}</p>}
-      {loading ? (
+      {initialLoading ? (
         <p className="text-sm text-muted-foreground" aria-live="polite">
           Cargando…
         </p>
       ) : (
         <>
-          <List2
-            items={listItems}
-            actionLabel="Descargar PDF"
-            sectionClassName="py-0"
-            emptyMessage="No se encontraron gacetas. Ajuste la búsqueda, las fechas o el número de edición."
-          />
+          <div
+            className={cn("relative transition-opacity duration-200", refreshing && "pointer-events-none opacity-60")}
+            aria-busy={refreshing}
+          >
+            <List2
+              items={listItems}
+              actionLabel="Descargar PDF"
+              sectionClassName="py-0"
+              emptyMessage="No se encontraron gacetas. Ajuste la búsqueda, las fechas o el número de edición."
+            />
+          </div>
           {total > 0 && (total > PER || totalPages > 1) && (
             <nav className="mt-8 flex flex-col items-center gap-3" aria-label="Paginación de gacetas">
               <p className="text-sm text-muted-foreground">
