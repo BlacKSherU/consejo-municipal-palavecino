@@ -99,20 +99,25 @@ export default function TeamShowcase({ members = [], publicUi }: TeamShowcasePro
               exit={{ opacity: 0 }}
               onClick={close}
             />
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="council-modal-title"
-              className={cn(
-                "fixed left-1/2 top-1/2 z-[70] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 border border-border bg-card shadow-2xl",
-                resolved.modalRounded,
-                resolved.modalMaxClass,
-              )}
-              initial={{ opacity: 0, scale: 0.94, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.96, y: 8 }}
-              transition={{ type: "spring", stiffness: 380, damping: 32 }}
+            {/* Flex centering: motion `y` was overriding Tailwind -translate (modal drifted down). */}
+            <div
+              className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none"
+              role="presentation"
             >
+              <motion.div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="council-modal-title"
+                className={cn(
+                  "relative flex max-h-[min(90vh,calc(100dvh-2rem))] w-full flex-col overflow-hidden border border-border bg-card shadow-2xl",
+                  resolved.modalRounded,
+                  resolved.modalMaxClass,
+                )}
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 380, damping: 32 }}
+              >
               <button
                 type="button"
                 className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm ring-1 ring-border transition hover:bg-muted"
@@ -122,7 +127,7 @@ export default function TeamShowcase({ members = [], publicUi }: TeamShowcasePro
                 <X className="h-4 w-4" />
               </button>
 
-              <div className="max-h-[85vh] overflow-y-auto">
+              <div className="min-h-0 flex-1 overflow-y-auto">
                 <div className={cn("relative aspect-[4/3] w-full overflow-hidden bg-muted sm:aspect-[16/10]", resolved.modalRounded)}>
                   <img
                     src={selected.image}
@@ -162,7 +167,8 @@ export default function TeamShowcase({ members = [], publicUi }: TeamShowcasePro
                   <SocialRow member={selected} />
                 </div>
               </div>
-            </motion.div>
+              </motion.div>
+            </div>
           </>
         )}
       </AnimatePresence>
