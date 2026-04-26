@@ -1,0 +1,10 @@
+---
+import { MarkdownEditorFullscreenIsland } from "../../components/admin/MarkdownEditorFullscreenIsland";
+import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
+---
+
+<AdminShellLayout title="Editar Markdown" variant="fullscreen">
+  <div class="h-full min-h-0">
+    <MarkdownEditorFullscreenIsland client:load />
+  </div>
+</AdminShellLayout>

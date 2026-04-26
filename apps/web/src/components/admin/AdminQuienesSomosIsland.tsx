@@ -1,16 +1,23 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { marked } from "marked";
-import { Trash2, Upload } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { FileText, Trash2, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { AdminFormSection } from "@/components/admin/AdminFormSection";
+import { MarkdownDemoButton } from "@/components/admin/MarkdownDemoButton";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { apiFetch, apiUrl } from "@/lib/api";
+import {
+  clearMarkdownResult,
+  getMarkdownResult,
+  goToMarkdownEditor,
+  MD_FIELD,
+} from "@/lib/markdown-editor-bridge";
+import { MARKDOWN_DEMO_BRIEF, MARKDOWN_DEMO_RICH } from "@/lib/markdown-demo-example";
 
 const imageRowSchema = z
   .object({
@@ -71,12 +78,6 @@ export function AdminQuienesSomosIsland() {
   });
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "images" });
-  const bodyForPreview = form.watch("body");
-  const bodyHtml = useMemo(() => {
-    const t = (bodyForPreview || "").trim();
-    if (!t) return null;
-    return marked.parse(t, { async: false }) as string;
-  }, [bodyForPreview]);
 
   useEffect(() => {
     (async () => {
@@ -110,6 +111,13 @@ export function AdminQuienesSomosIsland() {
         body: data.body || "",
         images: imgs,
       });
+      const md = getMarkdownResult();
+      if (md) {
+        if (md.fieldId === MD_FIELD.ABOUT_MISSION) form.setValue("mission", md.value);
+        else if (md.fieldId === MD_FIELD.ABOUT_VISION) form.setValue("vision", md.value);
+        else if (md.fieldId === MD_FIELD.ABOUT_BODY) form.setValue("body", md.value);
+        clearMarkdownResult();
+      }
     })();
   }, [form]);
 
@@ -240,7 +248,28 @@ export function AdminQuienesSomosIsland() {
               name="mission"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Misión</FormLabel>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <FormLabel>Misión (Markdown)</FormLabel>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <MarkdownDemoButton onFill={() => form.setValue("mission", MARKDOWN_DEMO_BRIEF)} />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() =>
+                          goToMarkdownEditor({
+                            returnUrl: "/gestion-cmp/quienes-somos",
+                            fieldId: MD_FIELD.ABOUT_MISSION,
+                            value: form.getValues("mission") || "",
+                            label: "Quiénes somos — misión (Markdown)",
+                          })
+                        }
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        Editar a pantalla completa
+                      </Button>
+                    </div>
+                  </div>
                   <FormControl>
                     <Textarea rows={5} placeholder="Propósito y razón de ser del consejo…" {...field} />
                   </FormControl>
@@ -254,7 +283,28 @@ export function AdminQuienesSomosIsland() {
               name="vision"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Visión</FormLabel>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <FormLabel>Visión (Markdown)</FormLabel>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <MarkdownDemoButton onFill={() => form.setValue("vision", MARKDOWN_DEMO_BRIEF)} />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() =>
+                          goToMarkdownEditor({
+                            returnUrl: "/gestion-cmp/quienes-somos",
+                            fieldId: MD_FIELD.ABOUT_VISION,
+                            value: form.getValues("vision") || "",
+                            label: "Quiénes somos — visión (Markdown)",
+                          })
+                        }
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        Editar a pantalla completa
+                      </Button>
+                    </div>
+                  </div>
                   <FormControl>
                     <Textarea rows={5} placeholder="Horizonte deseado a mediano plazo…" {...field} />
                   </FormControl>
@@ -369,74 +419,41 @@ export function AdminQuienesSomosIsland() {
             description="Bloque largo al pie, con título “Nuestra historia e información”."
             withTopSeparator
           >
-            <details className="rounded-lg border border-border bg-muted/40 p-4 text-sm open:bg-muted/60">
-              <summary className="cursor-pointer font-medium text-foreground">Guía rápida de Markdown (clic para abrir)</summary>
-              <div className="mt-4 space-y-3 text-muted-foreground">
-                <p>El texto se traduce a HTML. Use líneas en blanco para separar bloques (párrafos, listas, títulos).</p>
-                <ul className="ml-4 list-outside list-disc space-y-2">
-                  <li>
-                    <strong className="text-foreground">Títulos</strong>: líneas con <code className="text-xs"># Título 1</code> hasta <code className="text-xs">#### Subtítulo</code>.
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Cursiva y negrita</strong>: <code className="text-xs">*cursiva*</code> o <code className="text-xs">_cursiva_</code>{" "}
-                    y <code className="text-xs">**negrita**</code> o <code className="text-xs">__negrita__</code>.
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Vínculos</strong>: <code className="text-xs">[texto visible](https://…)</code>.
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Listas con viñetas</strong>: inicie líneas con <code className="text-xs">- </code>o <code className="text-xs">* </code> (cada viñeta en su línea).{" "}
-                    <strong>Lista numerada</strong>: <code className="text-xs">1. </code><code className="text-xs">2. </code>…
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Cita</strong>: comience con <code className="text-xs">&gt; </code>en cada línea citada.
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Código en línea</strong>: comillas inversas simples, <code className="text-xs">`así`</code>. <strong className="text-foreground">Bloque de código</strong>
-                    : tres tildes en su propia línea antes y después, con opcionalmente <code className="text-xs">```json</code> o <code className="text-xs">```python</code> al abrir.
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Tabla</strong>: separe celdas con <code className="text-xs">|</code>; bajo el encabezado use <code className="text-xs">| --- | --- |</code>.
-                  </li>
-                  <li>
-                    <strong className="text-foreground">Línea horizontal</strong>: <code className="text-xs">---</code> o <code className="text-xs">***</code> en una sola línea.
-                  </li>
-                </ul>
-                <p>Evite copiar y pegar HTML de Word sin revisar: si algo no se ve bien, use párrafos sencillos, listas y resaltado con * y **.</p>
-              </div>
-            </details>
-            <div className="mt-4 grid min-h-[22rem] gap-4 md:grid-cols-2">
+            <div className="max-w-3xl">
               <FormField
                 control={form.control}
                 name="body"
                 render={({ field }) => (
-                  <FormItem className="flex min-h-0 flex-col">
-                    <FormLabel className="text-foreground">Editor (Markdown)</FormLabel>
+                  <FormItem>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <FormLabel className="text-foreground">Cuerpo (Markdown)</FormLabel>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <MarkdownDemoButton onFill={() => form.setValue("body", MARKDOWN_DEMO_RICH)} />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            goToMarkdownEditor({
+                              returnUrl: "/gestion-cmp/quienes-somos",
+                              fieldId: MD_FIELD.ABOUT_BODY,
+                              value: form.getValues("body") || "",
+                              label: "Quiénes somos — cuerpo (Markdown)",
+                            })
+                          }
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Editar a pantalla completa
+                        </Button>
+                      </div>
+                    </div>
                     <FormControl>
-                      <Textarea
-                        className="min-h-[20rem] flex-1 resize-y font-mono text-sm md:min-h-0"
-                        rows={16}
-                        placeholder="Cuerpo en Markdown…"
-                        {...field}
-                      />
+                      <Textarea rows={14} className="font-mono text-sm" placeholder="Cuerpo en Markdown…" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <div className="flex min-h-0 min-w-0 flex-col rounded-lg border border-border bg-card">
-                <p className="border-b border-border px-3 py-2 text-sm font-medium text-foreground">Vista previa</p>
-                <div className="max-h-[min(32rem,60vh)] min-h-[12rem] flex-1 overflow-y-auto px-3 py-3">
-                  {bodyHtml ? (
-                    <div
-                      className="prose prose-slate max-w-none text-sm dark:prose-invert prose-headings:font-semibold prose-p:mb-3 prose-p:last:mb-0 prose-a:text-primary dark:prose-a:text-primary prose-strong:text-foreground"
-                      dangerouslySetInnerHTML={{ __html: bodyHtml }}
-                    />
-                  ) : (
-                    <p className="text-sm text-muted-foreground">La vista previa se actualiza mientras escribe a la izquierda.</p>
-                  )}
-                </div>
-              </div>
             </div>
           </AdminFormSection>
 

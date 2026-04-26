@@ -1,9 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { FileText, Pencil, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AdminFormSection } from "@/components/admin/AdminFormSection";
+import { MarkdownDemoButton } from "@/components/admin/MarkdownDemoButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -11,6 +12,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { apiFetch } from "@/lib/api";
+import {
+  clearMarkdownResult,
+  getMarkdownResult,
+  goToMarkdownEditor,
+  MD_FIELD,
+} from "@/lib/markdown-editor-bridge";
+import { MARKDOWN_DEMO_RICH } from "@/lib/markdown-demo-example";
 
 const createSchema = z.object({
   title: z.string().min(1, "Indique un título"),
@@ -45,6 +53,7 @@ export function AdminNoticiasIsland() {
   const [items, setItems] = useState<NewsItem[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  const skipNextEditLoadFromList = useRef(false);
 
   const createForm = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
@@ -72,7 +81,37 @@ export function AdminNoticiasIsland() {
   }, [load]);
 
   useEffect(() => {
+    const r = getMarkdownResult();
+    if (!r) return;
+    if (r.fieldId === MD_FIELD.NOTICIAS_CREATE_BODY) {
+      createForm.setValue("body", r.value);
+      clearMarkdownResult();
+      return;
+    }
+    const m = r.fieldId.match(/^noticias-edit-body-(\d+)$/);
+    if (m) {
+      const id = Number(m[1]);
+      const n = items.find((i) => i.id === id);
+      if (!n) return;
+      skipNextEditLoadFromList.current = true;
+      setEditingId(id);
+      editForm.reset({
+        title: n.title,
+        slug: n.slug,
+        excerpt: n.excerpt || "",
+        body: r.value,
+        published: n.published,
+      });
+      clearMarkdownResult();
+    }
+  }, [items, createForm, editForm]);
+
+  useEffect(() => {
     if (editingId == null) return;
+    if (skipNextEditLoadFromList.current) {
+      skipNextEditLoadFromList.current = false;
+      return;
+    }
     const n = items.find((i) => i.id === editingId);
     if (n) {
       editForm.reset({
@@ -179,7 +218,28 @@ export function AdminNoticiasIsland() {
                 name="body"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>Cuerpo (Markdown)</FormLabel>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <FormLabel>Cuerpo (Markdown)</FormLabel>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <MarkdownDemoButton onFill={() => createForm.setValue("body", MARKDOWN_DEMO_RICH)} />
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() =>
+                            goToMarkdownEditor({
+                              returnUrl: "/gestion-cmp/noticias",
+                              fieldId: MD_FIELD.NOTICIAS_CREATE_BODY,
+                              value: createForm.getValues("body") || "",
+                              label: "Nueva noticia — cuerpo (Markdown)",
+                            })
+                          }
+                        >
+                          <FileText className="h-3.5 w-3.5" />
+                          Editar a pantalla completa
+                        </Button>
+                      </div>
+                    </div>
                     <FormControl>
                       <Textarea rows={8} className="font-mono text-sm" {...field} />
                     </FormControl>
@@ -306,7 +366,28 @@ export function AdminNoticiasIsland() {
                           name="body"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Cuerpo (Markdown)</FormLabel>
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <FormLabel>Cuerpo (Markdown)</FormLabel>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <MarkdownDemoButton onFill={() => editForm.setValue("body", MARKDOWN_DEMO_RICH)} />
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() =>
+                                      goToMarkdownEditor({
+                                        returnUrl: "/gestion-cmp/noticias",
+                                        fieldId: MD_FIELD.noticiasEditBody(n.id),
+                                        value: editForm.getValues("body") || "",
+                                        label: `${n.title} — cuerpo (Markdown)`,
+                                      })
+                                    }
+                                  >
+                                    <FileText className="h-3.5 w-3.5" />
+                                    Editar a pantalla completa
+                                  </Button>
+                                </div>
+                              </div>
                               <FormControl>
                                 <Textarea rows={6} className="font-mono text-xs" {...field} />
                               </FormControl>

@@ -1,5 +1,6 @@
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { BookmarkIcon, X } from "lucide-react";
+import { marked } from "marked";
 import { useEffect, useState, type MouseEvent } from "react";
 import { apiUrl } from "@/lib/api";
 import { defaultPublicUiConfig, resolveNewsUi, type ResolvedNewsUi } from "@/lib/public-ui";
@@ -15,7 +16,8 @@ export interface NewsCard {
   location: string;
   image: string;
   gradientColors?: string[];
-  content?: string[];
+  /** HTML del cuerpo (solo al abrir el modal, desde Markdown). */
+  bodyHtml?: string;
 }
 
 export interface StatusBar {
@@ -44,12 +46,6 @@ const defaultStatusBars: StatusBar[] = [
   { id: "3", category: "Palavecino", subcategory: "Lara", length: 1, opacity: 0.4 },
 ];
 
-function bodyToParagraphs(body: string): string[] {
-  const stripped = body.replace(/^#{1,6}\s+/gm, "").trim();
-  const parts = stripped.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
-  return parts.length ? parts : [stripped || "Sin contenido."];
-}
-
 export function NewsCards({
   title = "Noticias",
   subtitle = "Comunicados del Consejo Municipal de Palavecino",
@@ -77,16 +73,35 @@ export function NewsCards({
   };
 
   const openCard = async (card: NewsCard) => {
-    setSelectedCard(card);
+    setSelectedCard({ ...card, bodyHtml: undefined });
     try {
       const res = await fetch(apiUrl("/api/news/" + encodeURIComponent(card.slug)));
-      if (res.ok) {
-        const n = (await res.json()) as { body?: string };
-        const content = bodyToParagraphs(n.body || "");
-        setSelectedCard((prev) => (prev && prev.id === card.id ? { ...prev, content } : prev));
+      if (!res.ok) {
+        setSelectedCard((prev) =>
+          prev && prev.id === card.id
+            ? {
+                ...prev,
+                bodyHtml: "<p class=\"text-muted-foreground\">No se pudo cargar el contenido.</p>",
+              }
+            : prev,
+        );
+        return;
       }
+      const n = (await res.json()) as { body?: string };
+      const raw = (n.body ?? "").trim();
+      const bodyHtml = raw.length
+        ? (marked.parse(raw, { async: false }) as string)
+        : "<p class=\"text-muted-foreground\">Esta noticia aún no tiene cuerpo publicado.</p>";
+      setSelectedCard((prev) => (prev && prev.id === card.id ? { ...prev, bodyHtml } : prev));
     } catch {
-      /* keep excerpt-less modal */
+      setSelectedCard((prev) =>
+        prev && prev.id === card.id
+          ? {
+              ...prev,
+              bodyHtml: "<p class=\"text-destructive\">No se pudo cargar el cuerpo de la noticia.</p>",
+            }
+          : prev,
+      );
     }
   };
 
@@ -295,19 +310,23 @@ export function NewsCards({
           {selectedCard && (
             <>
               <motion.div
-                className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm"
+                className="fixed inset-0 z-40 bg-slate-950/50 backdrop-blur-md dark:bg-black/60"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={closeCard}
+                aria-hidden
               />
 
               <motion.div
                 layoutId={`card-${selectedCard.id}`}
                 className={cn(
-                  "fixed inset-4 z-50 overflow-hidden border border-border bg-card md:inset-8 lg:inset-16",
+                  "fixed inset-4 z-50 flex max-h-[min(92dvh,880px)] min-h-0 flex-col overflow-hidden border border-border bg-card shadow-2xl md:inset-8 lg:inset-16",
                   newsUi.modalShellRounded,
                 )}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={selectedCard ? `modal-news-title-${selectedCard.id}` : undefined}
               >
                 <motion.button
                   type="button"
@@ -323,50 +342,69 @@ export function NewsCards({
                   <X className="h-4 w-4" />
                 </motion.button>
 
-                <div className="h-full overflow-y-auto">
-                  <motion.div layoutId={`card-image-${selectedCard.id}`} className={newsUi.modalImageContainerClass}>
-                    <img src={selectedCard.image} alt="" className="h-full w-full object-cover" />
-                    <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/90 to-transparent" />
-                    {selectedCard.gradientColors?.[0] && selectedCard.gradientColors[1] && (
-                      <div
-                        className={`absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t ${selectedCard.gradientColors[0]} ${selectedCard.gradientColors[1]} to-transparent`}
-                      />
-                    )}
-                    <div className="absolute bottom-4 left-4 text-white">
-                      <div className="mb-1 text-sm opacity-90">
-                        {selectedCard.category}, {selectedCard.subcategory}
-                      </div>
-                      <div className="text-sm opacity-75">
-                        {selectedCard.timeAgo}
-                        {selectedCard.location ? ` · ${selectedCard.location}` : ""}
-                      </div>
+                <motion.div
+                  layoutId={`card-image-${selectedCard.id}`}
+                  className={cn("w-full shrink-0", newsUi.modalImageContainerClass)}
+                >
+                  <img src={selectedCard.image} alt="" className="h-full w-full object-cover" />
+                  <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/90 to-transparent" />
+                  {selectedCard.gradientColors?.[0] && selectedCard.gradientColors[1] && (
+                    <div
+                      className={`absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t ${selectedCard.gradientColors[0]} ${selectedCard.gradientColors[1]} to-transparent`}
+                    />
+                  )}
+                  <div className="absolute bottom-4 left-4 text-white">
+                    <div className="mb-1 text-sm opacity-90">
+                      {selectedCard.category}, {selectedCard.subcategory}
                     </div>
-                  </motion.div>
+                    <div className="text-sm opacity-75">
+                      {selectedCard.timeAgo}
+                      {selectedCard.location ? ` · ${selectedCard.location}` : ""}
+                    </div>
+                  </div>
+                </motion.div>
 
-                  <motion.div layoutId={`card-content-${selectedCard.id}`} className="p-6 md:p-8">
-                    <motion.h1 layoutId={`card-title-${selectedCard.id}`} className="mb-6 text-2xl font-bold md:text-3xl">
-                      {selectedCard.title}
-                    </motion.h1>
+                <motion.div
+                  layoutId={`card-content-${selectedCard.id}`}
+                  className="flex min-h-0 flex-1 flex-col overflow-hidden p-5 md:p-6"
+                >
+                  <motion.h1
+                    id={`modal-news-title-${selectedCard.id}`}
+                    layoutId={`card-title-${selectedCard.id}`}
+                    className="shrink-0 pr-8 text-2xl font-bold leading-tight text-foreground md:pr-4 md:text-3xl"
+                  >
+                    {selectedCard.title}
+                  </motion.h1>
+                  <p className="mt-2 shrink-0 text-sm text-muted-foreground">
+                    Vista previa del inicio. El texto de abajo se muestra con formato, recortado y con desvanecido; el resto de la noticia al pulsar <span className="font-medium">Ver noticia completa</span>.
+                  </p>
+                  <div className="relative mt-4 min-h-0 w-full min-w-0 flex-1">
+                    <div className="relative max-h-[min(14.5rem,32vh)] overflow-hidden rounded-lg border border-border/60 bg-card/80">
+                      {selectedCard.bodyHtml === undefined ? (
+                        <div className="p-4">
+                          <p className="text-sm text-muted-foreground">Cargando contenido…</p>
+                        </div>
+                      ) : (
+                        <div
+                          className="prose prose-sm prose-slate max-w-none px-4 py-3 dark:prose-invert prose-headings:mb-2 prose-headings:mt-3 first:prose-headings:mt-0 prose-p:mb-2 prose-p:leading-relaxed prose-p:text-muted-foreground prose-a:text-brand dark:prose-a:text-brand-sky prose-headings:font-semibold"
+                          dangerouslySetInnerHTML={{ __html: selectedCard.bodyHtml }}
+                        />
+                      )}
+                      {selectedCard.bodyHtml !== undefined ? (
+                        <div
+                          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] h-24 bg-gradient-to-t from-card to-transparent backdrop-blur-[0.5px] dark:from-slate-950"
+                          aria-hidden
+                        />
+                      ) : null}
+                    </div>
                     <a
                       href={`/noticias/detalle?slug=${encodeURIComponent(selectedCard.slug)}`}
-                      className="mb-6 inline-block text-sm font-medium text-primary hover:underline"
+                      className="relative z-[2] mt-4 inline-flex w-full max-w-sm items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow transition hover:bg-primary/90 sm:w-auto"
                     >
-                      Abrir en página completa →
+                      Ver noticia completa
                     </a>
-                    <motion.div
-                      className="prose prose-slate max-w-none dark:prose-invert prose-p:text-muted-foreground"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3, duration: 0.4 }}
-                    >
-                      {selectedCard.content?.map((paragraph, index) => (
-                        <p key={index} className="mb-4">
-                          {paragraph}
-                        </p>
-                      ))}
-                    </motion.div>
-                  </motion.div>
-                </div>
+                  </div>
+                </motion.div>
               </motion.div>
             </>
           )}
