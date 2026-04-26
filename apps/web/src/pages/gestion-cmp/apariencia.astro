@@ -1,0 +1,223 @@
+---
+import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
+---
+
+<AdminShellLayout title="Apariencia pública">
+  <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Apariencia del sitio</h1>
+  <p class="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-400">
+    Ajuste el aspecto de las imágenes en noticias y en la galería de consejales. Los cambios se aplican al instante en el sitio público. En consejales, la ficha completa solo se abre al hacer clic (modal).
+  </p>
+
+  <form id="ui-form" class="mt-8 max-w-2xl space-y-8">
+    <fieldset class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+      <legend class="px-1 text-sm font-semibold text-slate-800 dark:text-slate-100">Noticias (tarjetas y modal)</legend>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        <label class="block text-sm">
+          Altura imagen en tarjeta
+          <select
+            name="news_cardImage"
+            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-950"
+          >
+            <option value="short">Baja</option>
+            <option value="medium">Media</option>
+            <option value="tall">Alta (recomendada)</option>
+            <option value="verytall">Muy alta</option>
+          </select>
+        </label>
+        <label class="block text-sm">
+          Esquinas tarjeta
+          <select
+            name="news_cardCorner"
+            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-950"
+          >
+            <option value="none">Sin redondeo</option>
+            <option value="sm">Pequeña</option>
+            <option value="md">Mediana</option>
+            <option value="lg">Grande</option>
+            <option value="xl">Extra</option>
+            <option value="2xl">2XL</option>
+            <option value="3xl">3XL</option>
+          </select>
+        </label>
+        <label class="block text-sm">
+          Altura imagen en modal
+          <select
+            name="news_modalImage"
+            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-950"
+          >
+            <option value="short">Baja</option>
+            <option value="medium">Media</option>
+            <option value="tall">Alta</option>
+            <option value="verytall">Muy alta</option>
+          </select>
+        </label>
+        <label class="block text-sm">
+          Esquinas modal
+          <select
+            name="news_modalCorner"
+            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-950"
+          >
+            <option value="none">Sin redondeo</option>
+            <option value="sm">Pequeña</option>
+            <option value="md">Mediana</option>
+            <option value="lg">Grande</option>
+            <option value="xl">Extra</option>
+            <option value="2xl">2XL</option>
+            <option value="3xl">3XL</option>
+          </select>
+        </label>
+      </div>
+      <label class="mt-4 flex items-center gap-2 text-sm">
+        <input type="checkbox" name="news_cardHoverLift" class="rounded border-slate-300" />
+        Animación al pasar el mouse (elevación de la tarjeta)
+      </label>
+    </fieldset>
+
+    <fieldset class="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900">
+      <legend class="px-1 text-sm font-semibold text-slate-800 dark:text-slate-100">Consejo (fotos y modal)</legend>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        <label class="block text-sm">
+          Tamaño galería de fotos
+          <select
+            name="council_photoPreset"
+            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-950"
+          >
+            <option value="compact">Compacta</option>
+            <option value="default">Estándar</option>
+            <option value="large">Grande</option>
+          </select>
+        </label>
+        <label class="block text-sm">
+          Esquinas de cada foto
+          <select
+            name="council_photoCorner"
+            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-950"
+          >
+            <option value="none">Sin redondeo</option>
+            <option value="sm">Pequeña</option>
+            <option value="md">Mediana</option>
+            <option value="lg">Grande</option>
+            <option value="xl">Extra</option>
+            <option value="2xl">2XL</option>
+            <option value="3xl">3XL</option>
+          </select>
+        </label>
+        <label class="block text-sm">
+          Ancho del modal
+          <select
+            name="council_modalWidth"
+            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-950"
+          >
+            <option value="sm">Estrecho</option>
+            <option value="md">Mediano</option>
+            <option value="lg">Ancho</option>
+            <option value="xl">Muy ancho</option>
+          </select>
+        </label>
+        <label class="block text-sm">
+          Esquinas del modal
+          <select
+            name="council_modalCorner"
+            class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-950"
+          >
+            <option value="none">Sin redondeo</option>
+            <option value="sm">Pequeña</option>
+            <option value="md">Mediana</option>
+            <option value="lg">Grande</option>
+            <option value="xl">Extra</option>
+            <option value="2xl">2XL</option>
+            <option value="3xl">3XL</option>
+          </select>
+        </label>
+      </div>
+      <label class="mt-4 flex items-center gap-2 text-sm">
+        <input type="checkbox" name="council_photoGrayscale" class="rounded border-slate-300" />
+        Fotos en escala de grises hasta abrir el modal
+      </label>
+    </fieldset>
+
+    <p id="ui-msg" class="text-sm text-green-700 dark:text-green-400"></p>
+    <button type="submit" class="rounded-xl bg-brand px-6 py-2 text-sm font-semibold text-white">Guardar apariencia</button>
+  </form>
+</AdminShellLayout>
+
+<script>
+  import { apiFetch } from "../../lib/api";
+
+  type Config = {
+    version: number;
+    news: {
+      cardImage: string;
+      cardCorner: string;
+      modalImage: string;
+      modalCorner: string;
+      cardHoverLift: boolean;
+    };
+    council: {
+      photoCorner: string;
+      photoPreset: string;
+      modalCorner: string;
+      modalWidth: string;
+      photoGrayscale: boolean;
+    };
+  };
+
+  function setSelect(name: string, value: string) {
+    const el = document.querySelector(`[name="${name}"]`) as HTMLSelectElement | null;
+    if (el) el.value = value;
+  }
+
+  function setCheck(name: string, checked: boolean) {
+    const el = document.querySelector(`[name="${name}"]`) as HTMLInputElement | null;
+    if (el) el.checked = checked;
+  }
+
+  async function load() {
+    const res = await apiFetch("/api/admin/site/public-ui");
+    if (!res.ok) return;
+    const data = (await res.json()) as { config: Config };
+    const c = data.config;
+    setSelect("news_cardImage", c.news.cardImage);
+    setSelect("news_cardCorner", c.news.cardCorner);
+    setSelect("news_modalImage", c.news.modalImage);
+    setSelect("news_modalCorner", c.news.modalCorner);
+    setCheck("news_cardHoverLift", c.news.cardHoverLift);
+    setSelect("council_photoPreset", c.council.photoPreset);
+    setSelect("council_photoCorner", c.council.photoCorner);
+    setSelect("council_modalWidth", c.council.modalWidth);
+    setSelect("council_modalCorner", c.council.modalCorner);
+    setCheck("council_photoGrayscale", c.council.photoGrayscale);
+  }
+
+  document.getElementById("ui-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const fd = new FormData(form);
+    const config: Config = {
+      version: 1,
+      news: {
+        cardImage: String(fd.get("news_cardImage") || "tall"),
+        cardCorner: String(fd.get("news_cardCorner") || "lg"),
+        modalImage: String(fd.get("news_modalImage") || "tall"),
+        modalCorner: String(fd.get("news_modalCorner") || "xl"),
+        cardHoverLift: fd.get("news_cardHoverLift") === "on",
+      },
+      council: {
+        photoPreset: String(fd.get("council_photoPreset") || "default"),
+        photoCorner: String(fd.get("council_photoCorner") || "xl"),
+        modalWidth: String(fd.get("council_modalWidth") || "md"),
+        modalCorner: String(fd.get("council_modalCorner") || "xl"),
+        photoGrayscale: fd.get("council_photoGrayscale") === "on",
+      },
+    };
+    const msg = document.getElementById("ui-msg");
+    const res = await apiFetch("/api/admin/site/public-ui", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ config }),
+    });
+    if (msg) msg.textContent = res.ok ? "Guardado. Actualice la página pública para ver los cambios." : "Error al guardar.";
+  });
+
+  load();
+</script>

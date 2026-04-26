@@ -1,5 +1,12 @@
-import { useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { X } from "lucide-react";
+import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import { FaBehance, FaInstagram, FaLinkedinIn, FaTwitter } from "react-icons/fa";
+import {
+  defaultPublicUiConfig,
+  type PublicUiConfig,
+  resolveCouncilUi,
+} from "@/lib/public-ui";
 import { cn } from "@/lib/utils";
 
 export interface TeamMember {
@@ -7,6 +14,9 @@ export interface TeamMember {
   name: string;
   role: string;
   image: string;
+  bio?: string;
+  email?: string | null;
+  phone?: string | null;
   social?: {
     twitter?: string;
     linkedin?: string;
@@ -17,10 +27,25 @@ export interface TeamMember {
 
 interface TeamShowcaseProps {
   members?: TeamMember[];
+  /** Apariencia desde panel admin (/api/public/ui). */
+  publicUi?: PublicUiConfig;
 }
 
-export default function TeamShowcase({ members = [] }: TeamShowcaseProps) {
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+export default function TeamShowcase({ members = [], publicUi }: TeamShowcaseProps) {
+  const uiCfg = publicUi ?? defaultPublicUiConfig;
+  const resolved = resolveCouncilUi(uiCfg);
+  const [selected, setSelected] = useState<TeamMember | null>(null);
+
+  const close = useCallback(() => setSelected(null), []);
+
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selected, close]);
 
   if (members.length === 0) {
     return (
@@ -32,100 +57,150 @@ export default function TeamShowcase({ members = [] }: TeamShowcaseProps) {
   const col2 = members.filter((_, i) => i % 3 === 1);
   const col3 = members.filter((_, i) => i % 3 === 2);
 
+  const open = (m: TeamMember) => setSelected(m);
+
   return (
-    <div className="mx-auto flex w-full max-w-5xl select-none flex-col items-start gap-8 px-4 py-8 font-sans md:flex-row md:gap-10 lg:gap-14">
-      <div className="flex flex-shrink-0 gap-2 overflow-x-auto pb-1 md:gap-3 md:pb-0">
-        <div className="flex flex-col gap-2 md:gap-3">
-          {col1.map((member) => (
-            <PhotoCard
-              key={member.id}
-              member={member}
-              className="h-[120px] w-[110px] sm:h-[140px] sm:w-[130px] md:h-[165px] md:w-[155px]"
-              hoveredId={hoveredId}
-              onHover={setHoveredId}
-            />
-          ))}
+    <>
+      <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-8 px-4 py-8 font-sans md:flex-row md:gap-10 lg:gap-14">
+        <div className="flex flex-shrink-0 gap-2 overflow-x-auto pb-1 md:gap-3 md:pb-0">
+          <div className="flex flex-col gap-2 md:gap-3">
+            {col1.map((member) => (
+              <PhotoCard key={member.id} member={member} className={resolved.photoCol1} resolved={resolved} onOpen={open} />
+            ))}
+          </div>
+          <div className="mt-[48px] flex flex-col gap-2 sm:mt-[56px] md:mt-[68px] md:gap-3">
+            {col2.map((member) => (
+              <PhotoCard key={member.id} member={member} className={resolved.photoCol2} resolved={resolved} onOpen={open} />
+            ))}
+          </div>
+          <div className="mt-[22px] flex flex-col gap-2 sm:mt-[26px] md:mt-[32px] md:gap-3">
+            {col3.map((member) => (
+              <PhotoCard key={member.id} member={member} className={resolved.photoCol3} resolved={resolved} onOpen={open} />
+            ))}
+          </div>
         </div>
-        <div className="mt-[48px] flex flex-col gap-2 sm:mt-[56px] md:mt-[68px] md:gap-3">
-          {col2.map((member) => (
-            <PhotoCard
-              key={member.id}
-              member={member}
-              className="h-[132px] w-[122px] sm:h-[155px] sm:w-[145px] md:h-[182px] md:w-[172px]"
-              hoveredId={hoveredId}
-              onHover={setHoveredId}
-            />
-          ))}
-        </div>
-        <div className="mt-[22px] flex flex-col gap-2 sm:mt-[26px] md:mt-[32px] md:gap-3">
-          {col3.map((member) => (
-            <PhotoCard
-              key={member.id}
-              member={member}
-              className="h-[125px] w-[115px] sm:h-[146px] sm:w-[136px] md:h-[172px] md:w-[162px]"
-              hoveredId={hoveredId}
-              onHover={setHoveredId}
-            />
+
+        <div className="flex w-full flex-1 flex-col gap-4 pt-0 sm:grid sm:grid-cols-2 md:flex md:flex-col md:gap-5 md:pt-2">
+          {members.map((member) => (
+            <MemberRow key={member.id} member={member} onOpen={open} />
           ))}
         </div>
       </div>
 
-      <div className="flex w-full flex-1 flex-col gap-4 pt-0 sm:grid sm:grid-cols-2 md:flex md:flex-col md:gap-5 md:pt-2">
-        {members.map((member) => (
-          <MemberRow key={member.id} member={member} hoveredId={hoveredId} onHover={setHoveredId} />
-        ))}
-      </div>
-    </div>
+      <AnimatePresence>
+        {selected && (
+          <>
+            <motion.button
+              type="button"
+              aria-label="Cerrar"
+              className="fixed inset-0 z-[60] bg-background/75 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={close}
+            />
+            <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="council-modal-title"
+              className={cn(
+                "fixed left-1/2 top-1/2 z-[70] w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 border border-border bg-card shadow-2xl",
+                resolved.modalRounded,
+                resolved.modalMaxClass,
+              )}
+              initial={{ opacity: 0, scale: 0.94, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 8 }}
+              transition={{ type: "spring", stiffness: 380, damping: 32 }}
+            >
+              <button
+                type="button"
+                className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm ring-1 ring-border transition hover:bg-muted"
+                onClick={close}
+                aria-label="Cerrar"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              <div className="max-h-[85vh] overflow-y-auto">
+                <div className={cn("relative aspect-[4/3] w-full overflow-hidden bg-muted sm:aspect-[16/10]", resolved.modalRounded)}>
+                  <img
+                    src={selected.image}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    style={{ filter: "none" }}
+                  />
+                  <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-background/95 to-transparent" />
+                </div>
+                <div className="space-y-4 p-6 sm:p-8">
+                  <div>
+                    <h2 id="council-modal-title" className="text-2xl font-bold tracking-tight text-foreground">
+                      {selected.name}
+                    </h2>
+                    <p className="mt-1 text-sm font-medium uppercase tracking-wider text-muted-foreground">{selected.role}</p>
+                  </div>
+
+                  {selected.bio ? (
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{selected.bio}</p>
+                  ) : (
+                    <p className="text-sm italic text-muted-foreground">Sin biografía publicada.</p>
+                  )}
+
+                  <div className="flex flex-wrap gap-3 text-sm">
+                    {selected.email ? (
+                      <a className="font-medium text-primary hover:underline" href={`mailto:${selected.email}`}>
+                        {selected.email}
+                      </a>
+                    ) : null}
+                    {selected.phone ? (
+                      <a className="font-medium text-primary hover:underline" href={`tel:${selected.phone.replace(/\s/g, "")}`}>
+                        {selected.phone}
+                      </a>
+                    ) : null}
+                  </div>
+
+                  <SocialRow member={selected} />
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
 function PhotoCard({
   member,
   className,
-  hoveredId,
-  onHover,
+  resolved,
+  onOpen,
 }: {
   member: TeamMember;
   className: string;
-  hoveredId: string | null;
-  onHover: (id: string | null) => void;
+  resolved: ReturnType<typeof resolveCouncilUi>;
+  onOpen: (m: TeamMember) => void;
 }) {
-  const isActive = hoveredId === member.id;
-  const isDimmed = hoveredId !== null && !isActive;
-
   return (
-    <div
-      className={cn(
-        "flex-shrink-0 cursor-pointer overflow-hidden rounded-xl transition-opacity duration-300",
-        className,
-        isDimmed ? "opacity-60" : "opacity-100",
-      )}
-      onMouseEnter={() => onHover(member.id)}
-      onMouseLeave={() => onHover(null)}
+    <button
+      type="button"
+      className={className}
+      onClick={() => onOpen(member)}
+      aria-label={`Ver ficha de ${member.name}`}
     >
       <img
         src={member.image}
-        alt={member.name}
-        className="h-full w-full object-cover transition-[filter] duration-500"
+        alt=""
+        className="h-full w-full object-cover"
         style={{
-          filter: isActive ? "grayscale(0) brightness(1)" : "grayscale(1) brightness(0.77)",
+          filter: resolved.photoGrayscale ? "grayscale(1) brightness(0.88)" : "none",
         }}
       />
-    </div>
+    </button>
   );
 }
 
-function MemberRow({
-  member,
-  hoveredId,
-  onHover,
-}: {
-  member: TeamMember;
-  hoveredId: string | null;
-  onHover: (id: string | null) => void;
-}) {
-  const isActive = hoveredId === member.id;
-  const isDimmed = hoveredId !== null && !isActive;
+function MemberRow({ member, onOpen }: { member: TeamMember; onOpen: (m: TeamMember) => void }) {
   const hasSocial =
     member.social?.twitter ??
     member.social?.linkedin ??
@@ -134,91 +209,101 @@ function MemberRow({
 
   return (
     <div
-      className={cn(
-        "cursor-pointer transition-opacity duration-300",
-        isDimmed ? "opacity-50" : "opacity-100",
-      )}
-      onMouseEnter={() => onHover(member.id)}
-      onMouseLeave={() => onHover(null)}
+      role="button"
+      tabIndex={0}
+      className="w-full cursor-pointer rounded-lg px-1 py-1 text-left transition-colors hover:bg-muted/60 focus-visible:outline focus-visible:ring-2 focus-visible:ring-ring"
+      onClick={() => onOpen(member)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onOpen(member);
+        }
+      }}
     >
       <div className="flex items-center gap-2.5">
-        <span
-          className={cn(
-            "h-3 w-4 flex-shrink-0 rounded-[5px] transition-all duration-300",
-            isActive ? "w-5 bg-foreground" : "bg-foreground/25",
-          )}
-        />
-        <span
-          className={cn(
-            "text-base font-semibold leading-none tracking-tight transition-colors duration-300 md:text-[18px]",
-            isActive ? "text-foreground" : "text-foreground/80",
-          )}
-        >
-          {member.name}
-        </span>
+        <span className="h-3 w-4 flex-shrink-0 rounded-[5px] bg-foreground/25" />
+        <span className="text-base font-semibold leading-none tracking-tight text-foreground md:text-[18px]">{member.name}</span>
 
         {hasSocial && (
-          <div
-            className={cn(
-              "ml-0.5 flex items-center gap-1.5 transition-all duration-200",
-              isActive ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-2 opacity-0",
-            )}
-          >
-            {member.social?.twitter && (
-              <a
-                href={member.social.twitter}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="rounded p-1 text-muted-foreground transition-all duration-150 hover:scale-110 hover:bg-foreground/10 hover:text-foreground"
-                title="X / Twitter"
-              >
-                <FaTwitter size={10} />
-              </a>
-            )}
-            {member.social?.linkedin && (
-              <a
-                href={member.social.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="rounded p-1 text-muted-foreground transition-all duration-150 hover:scale-110 hover:bg-foreground/10 hover:text-foreground"
-                title="LinkedIn"
-              >
-                <FaLinkedinIn size={10} />
-              </a>
-            )}
-            {member.social?.instagram && (
-              <a
-                href={member.social.instagram}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="rounded p-1 text-muted-foreground transition-all duration-150 hover:scale-110 hover:bg-foreground/10 hover:text-foreground"
-                title="Instagram"
-              >
-                <FaInstagram size={10} />
-              </a>
-            )}
-            {member.social?.behance && (
-              <a
-                href={member.social.behance}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="rounded p-1 text-muted-foreground transition-all duration-150 hover:scale-110 hover:bg-foreground/10 hover:text-foreground"
-                title="Behance"
-              >
-                <FaBehance size={10} />
-              </a>
-            )}
+          <div className="ml-0.5 flex items-center gap-1.5">
+            <SocialRow member={member} compact stopRowOpen />
           </div>
         )}
       </div>
-
       <p className="mt-1.5 pl-[27px] text-[7px] font-medium uppercase tracking-[0.2em] text-muted-foreground md:text-[10px]">
         {member.role}
       </p>
+    </div>
+  );
+}
+
+function SocialRow({ member, compact, stopRowOpen }: { member: TeamMember; compact?: boolean; stopRowOpen?: boolean }) {
+  const icon = compact ? 10 : 14;
+  const pad = compact ? "p-1" : "p-1.5";
+  const stop = (e: MouseEvent) => {
+    if (stopRowOpen) e.stopPropagation();
+  };
+  if (
+    !member.social?.twitter &&
+    !member.social?.linkedin &&
+    !member.social?.instagram &&
+    !member.social?.behance
+  ) {
+    return null;
+  }
+  return (
+    <div className={cn("flex flex-wrap items-center gap-2", !compact && "pt-2")}>
+      {member.social?.twitter && (
+        <a
+          href={member.social.twitter}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={stop}
+          className={cn(
+            "rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground",
+            pad,
+          )}
+          title="X / Twitter"
+        >
+          <FaTwitter size={icon} />
+        </a>
+      )}
+      {member.social?.linkedin && (
+        <a
+          href={member.social.linkedin}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={stop}
+          className={cn("rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground", pad)}
+          title="LinkedIn"
+        >
+          <FaLinkedinIn size={icon} />
+        </a>
+      )}
+      {member.social?.instagram && (
+        <a
+          href={member.social.instagram}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={stop}
+          className={cn("rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground", pad)}
+          title="Instagram"
+        >
+          <FaInstagram size={icon} />
+        </a>
+      )}
+      {member.social?.behance && (
+        <a
+          href={member.social.behance}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={stop}
+          className={cn("rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground", pad)}
+          title="Behance"
+        >
+          <FaBehance size={icon} />
+        </a>
+      )}
     </div>
   );
 }

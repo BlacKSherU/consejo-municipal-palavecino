@@ -53,6 +53,92 @@ function slugify(input: string): string {
   return s || "item";
 }
 
+/** Presets de apariencia pública (noticias + consejo). Validado en PUT. */
+const NEWS_IMG = ["short", "medium", "tall", "verytall"] as const;
+const CORNERS = ["none", "sm", "md", "lg", "xl", "2xl", "3xl"] as const;
+const COUNCIL_PRESET = ["compact", "default", "large"] as const;
+const MODAL_W = ["sm", "md", "lg", "xl"] as const;
+
+type NewsImg = (typeof NEWS_IMG)[number];
+type Corner = (typeof CORNERS)[number];
+type CouncilPreset = (typeof COUNCIL_PRESET)[number];
+type ModalW = (typeof MODAL_W)[number];
+
+type PublicUiStored = {
+  version: number;
+  news: {
+    cardImage: NewsImg;
+    cardCorner: Corner;
+    modalImage: NewsImg;
+    modalCorner: Corner;
+    cardHoverLift: boolean;
+  };
+  council: {
+    photoCorner: Corner;
+    photoPreset: CouncilPreset;
+    modalCorner: Corner;
+    modalWidth: ModalW;
+    photoGrayscale: boolean;
+  };
+};
+
+const DEFAULT_PUBLIC_UI: PublicUiStored = {
+  version: 1,
+  news: {
+    cardImage: "tall",
+    cardCorner: "lg",
+    modalImage: "tall",
+    modalCorner: "xl",
+    cardHoverLift: true,
+  },
+  council: {
+    photoCorner: "xl",
+    photoPreset: "default",
+    modalCorner: "xl",
+    modalWidth: "md",
+    photoGrayscale: true,
+  },
+};
+
+function pickEnum<T extends string>(allowed: readonly T[], v: unknown, fallback: T): T {
+  if (typeof v === "string" && (allowed as readonly string[]).includes(v)) return v as T;
+  return fallback;
+}
+
+function mergePublicUi(raw: unknown): PublicUiStored {
+  const o = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const news = o.news && typeof o.news === "object" ? (o.news as Record<string, unknown>) : {};
+  const council = o.council && typeof o.council === "object" ? (o.council as Record<string, unknown>) : {};
+  return {
+    version: 1,
+    news: {
+      cardImage: pickEnum(NEWS_IMG, news.cardImage, DEFAULT_PUBLIC_UI.news.cardImage),
+      cardCorner: pickEnum(CORNERS, news.cardCorner, DEFAULT_PUBLIC_UI.news.cardCorner),
+      modalImage: pickEnum(NEWS_IMG, news.modalImage, DEFAULT_PUBLIC_UI.news.modalImage),
+      modalCorner: pickEnum(CORNERS, news.modalCorner, DEFAULT_PUBLIC_UI.news.modalCorner),
+      cardHoverLift: typeof news.cardHoverLift === "boolean" ? news.cardHoverLift : DEFAULT_PUBLIC_UI.news.cardHoverLift,
+    },
+    council: {
+      photoCorner: pickEnum(CORNERS, council.photoCorner, DEFAULT_PUBLIC_UI.council.photoCorner),
+      photoPreset: pickEnum(COUNCIL_PRESET, council.photoPreset, DEFAULT_PUBLIC_UI.council.photoPreset),
+      modalCorner: pickEnum(CORNERS, council.modalCorner, DEFAULT_PUBLIC_UI.council.modalCorner),
+      modalWidth: pickEnum(MODAL_W, council.modalWidth, DEFAULT_PUBLIC_UI.council.modalWidth),
+      photoGrayscale:
+        typeof council.photoGrayscale === "boolean" ? council.photoGrayscale : DEFAULT_PUBLIC_UI.council.photoGrayscale,
+    },
+  };
+}
+
+async function loadPublicUiFromDb(db: D1Database): Promise<PublicUiStored> {
+  const row = await db.prepare(`SELECT body FROM site_content WHERE key = 'public_ui'`).first<{ body: string }>();
+  if (!row?.body) return DEFAULT_PUBLIC_UI;
+  try {
+    return mergePublicUi(JSON.parse(row.body));
+  } catch {
+    return DEFAULT_PUBLIC_UI;
+  }
+}
+
 async function getAuth(c: Context<{ Bindings: Env }>): Promise<{ id: number; email: string } | null> {
   const auth = c.req.raw.headers.get("Authorization");
   let token: string | null = null;
@@ -82,6 +168,11 @@ app.get("/api/site/about", async (c) => {
   }>();
   if (!row) return c.json({ body: "", updated_at: null });
   return c.json({ body: row.body, updated_at: row.updated_at });
+});
+
+app.get("/api/public/ui", async (c) => {
+  const config = await loadPublicUiFromDb(c.env.DB);
+  return c.json({ config });
 });
 
 // --- Public: news ---
@@ -293,6 +384,33 @@ app.put("/api/admin/site/about", async (c) => {
     .bind(text)
     .run();
   return c.json({ ok: true });
+});
+
+app.get("/api/admin/site/public-ui", async (c) => {
+  const row = await c.env.DB.prepare(`SELECT body, updated_at FROM site_content WHERE key = 'public_ui'`).first<{
+    body: string;
+    updated_at: string;
+  }>();
+  const config = await loadPublicUiFromDb(c.env.DB);
+  return c.json({ config, updated_at: row?.updated_at ?? null });
+});
+
+app.put("/api/admin/site/public-ui", async (c) => {
+  let body: { config?: unknown };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "Invalid JSON" }, 400);
+  }
+  const config = mergePublicUi(body.config);
+  const json = JSON.stringify(config);
+  await c.env.DB.prepare(
+    `INSERT INTO site_content (key, body, updated_at) VALUES ('public_ui', ?, datetime('now'))
+     ON CONFLICT(key) DO UPDATE SET body = excluded.body, updated_at = datetime('now')`
+  )
+    .bind(json)
+    .run();
+  return c.json({ ok: true, config });
 });
 
 // Admin news

@@ -2,6 +2,7 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-m
 import { BookmarkIcon, X } from "lucide-react";
 import { useEffect, useState, type MouseEvent } from "react";
 import { apiUrl } from "@/lib/api";
+import { defaultPublicUiConfig, resolveNewsUi, type ResolvedNewsUi } from "@/lib/public-ui";
 import { cn } from "@/lib/utils";
 
 export interface NewsCard {
@@ -31,6 +32,8 @@ export interface NewsCardsProps {
   statusBars?: StatusBar[];
   newsCards?: NewsCard[];
   enableAnimations?: boolean;
+  /** Estilos de imagen / modal desde panel admin. */
+  newsUi?: ResolvedNewsUi;
 }
 
 const defaultStatusBars: StatusBar[] = [
@@ -51,7 +54,9 @@ export function NewsCards({
   statusBars = defaultStatusBars,
   newsCards = [],
   enableAnimations = true,
+  newsUi: newsUiProp,
 }: NewsCardsProps) {
+  const newsUi = newsUiProp ?? resolveNewsUi(defaultPublicUiConfig);
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedCard, setSelectedCard] = useState<NewsCard | null>(null);
   const [bookmarkedCards, setBookmarkedCards] = useState<Set<string>>(new Set());
@@ -201,20 +206,26 @@ export function NewsCards({
               <motion.article
                 key={card.id}
                 layoutId={`card-${card.id}`}
-                className="group cursor-pointer overflow-hidden rounded-lg border border-border/50 bg-card transition-all duration-300"
+                className={cn(
+                  "group cursor-pointer overflow-hidden border border-border/50 bg-card transition-all duration-300",
+                  newsUi.cardArticleRounded,
+                )}
                 variants={shouldAnimate ? cardVariants : {}}
                 whileHover={
-                  shouldAnimate
+                  shouldAnimate && newsUi.cardHoverLift
                     ? { y: -4, scale: 1.01, transition: { type: "spring", stiffness: 400, damping: 25 } }
                     : {}
                 }
                 onClick={() => void openCard(card)}
               >
-                <motion.div layoutId={`card-image-${card.id}`} className="relative h-56 overflow-hidden bg-muted">
+                <motion.div layoutId={`card-image-${card.id}`} className={newsUi.cardImageContainerClass}>
                   <img
                     src={card.image}
                     alt=""
-                    className="h-full w-full transform-gpu object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    className={cn(
+                      "h-full w-full transform-gpu object-cover transition-transform duration-700 ease-out",
+                      newsUi.cardHoverLift && "group-hover:scale-105",
+                    )}
                   />
                   <div className="absolute inset-x-0 bottom-0 h-1/5 bg-gradient-to-t from-background/80 to-transparent" />
                   {card.gradientColors?.[0] && card.gradientColors[1] && (
@@ -284,7 +295,10 @@ export function NewsCards({
 
               <motion.div
                 layoutId={`card-${selectedCard.id}`}
-                className="fixed inset-4 z-50 overflow-hidden rounded-xl border border-border bg-card md:inset-8 lg:inset-16"
+                className={cn(
+                  "fixed inset-4 z-50 overflow-hidden border border-border bg-card md:inset-8 lg:inset-16",
+                  newsUi.modalShellRounded,
+                )}
               >
                 <motion.button
                   type="button"
@@ -301,7 +315,7 @@ export function NewsCards({
                 </motion.button>
 
                 <div className="h-full overflow-y-auto">
-                  <motion.div layoutId={`card-image-${selectedCard.id}`} className="relative h-64 md:h-80">
+                  <motion.div layoutId={`card-image-${selectedCard.id}`} className={newsUi.modalImageContainerClass}>
                     <img src={selectedCard.image} alt="" className="h-full w-full object-cover" />
                     <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/90 to-transparent" />
                     {selectedCard.gradientColors?.[0] && selectedCard.gradientColors[1] && (
