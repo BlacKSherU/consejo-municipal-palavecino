@@ -41,6 +41,16 @@ app.use("*", async (c, next) => {
   })(c, next);
 });
 
+/** Comprueba que el Worker desplegado es el correcto (al abrir la URL base en el navegador o con curl). */
+app.get("/", (c) =>
+  c.json({
+    ok: true,
+    service: "cmp-api",
+    project: "Consejo Municipal de Palavecino",
+    check: { health: "/health", publicApi: "GET /api/site/home", adminRequiresAuth: "GET /api/admin/*" },
+  })
+);
+
 app.get("/health", (c) => c.json({ ok: true }));
 
 function slugify(input: string): string {
@@ -372,20 +382,68 @@ app.get("/api/public/ui", async (c) => {
   return c.json({ config });
 });
 
-// --- Public: news ---
+// --- Public: news (q= búsqueda; page+perPage paginación; limit+offset vista previa) ---
 app.get("/api/news", async (c) => {
-  const rows = await c.env.DB.prepare(
-    `SELECT id, slug, title, excerpt, published_at, updated_at FROM news WHERE published = 1
-     ORDER BY CASE WHEN published_at IS NULL THEN 1 ELSE 0 END, datetime(published_at) DESC, id DESC`
-  ).all<{
+  const q = (c.req.query("q") ?? "").trim();
+  const pageQ = c.req.query("page");
+  const perPageQ = c.req.query("perPage") ?? c.req.query("per_page");
+  const limitQ = c.req.query("limit");
+  const offsetQ = c.req.query("offset");
+  const hasPage = pageQ != null && pageQ !== "";
+  const hasLimit = limitQ != null && limitQ !== "";
+
+  const perPage = Math.min(50, Math.max(1, parseInt(String(perPageQ ?? "10"), 10) || 10));
+  const orderSql =
+    "ORDER BY CASE WHEN published_at IS NULL THEN 1 ELSE 0 END, datetime(published_at) DESC, id DESC";
+
+  let whereSql = "published = 1";
+  const binds: (string | number)[] = [];
+  if (q.length > 0) {
+    const like = `%${q.replace(/"/g, "")}%`;
+    whereSql +=
+      " AND (title LIKE ? OR excerpt LIKE ? OR slug LIKE ? OR (published_at IS NOT NULL AND published_at LIKE ?))";
+    binds.push(like, like, like, like);
+  }
+
+  const countRow = await c.env.DB
+    .prepare(`SELECT COUNT(*) as c FROM news WHERE ${whereSql}`)
+    .bind(...binds)
+    .first<{ c: number }>();
+  const total = countRow?.c ?? 0;
+
+  const baseSelect = `SELECT id, slug, title, excerpt, published_at, updated_at FROM news WHERE ${whereSql} ${orderSql}`;
+
+  type NewsRow = {
     id: number;
     slug: string;
     title: string;
     excerpt: string;
     published_at: string | null;
     updated_at: string;
-  }>();
-  return c.json({ items: rows.results ?? [] });
+  };
+
+  if (hasPage) {
+    const page = Math.max(1, parseInt(String(pageQ), 10) || 1);
+    const offset = (page - 1) * perPage;
+    const listBinds = [...binds, perPage, offset];
+    const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<NewsRow>();
+    return c.json({
+      items: rows.results ?? [],
+      total,
+      page,
+      perPage,
+      totalPages: Math.max(1, Math.ceil(total / perPage)),
+    });
+  }
+  if (hasLimit) {
+    const limit = Math.min(100, Math.max(1, parseInt(String(limitQ), 10) || 10));
+    const offset = Math.max(0, parseInt(String(offsetQ ?? "0"), 10) || 0);
+    const listBinds = [...binds, limit, offset];
+    const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<NewsRow>();
+    return c.json({ items: rows.results ?? [], total, limit, offset });
+  }
+  const rows = await c.env.DB.prepare(baseSelect).bind(...binds).all<NewsRow>();
+  return c.json({ items: rows.results ?? [], total });
 });
 
 app.get("/api/news/:slug", async (c) => {
@@ -434,11 +492,36 @@ app.get("/api/council", async (c) => {
   return c.json({ positions: withMembers });
 });
 
-// --- Public: gazettes list ---
+// --- Public: gazettes list (mismos parámetros q / page / perPage / limit+offset) ---
 app.get("/api/gazettes", async (c) => {
-  const rows = await c.env.DB.prepare(
-    `SELECT id, title, issue_number, published_at, file_name, file_size, mime FROM gazettes ORDER BY datetime(published_at) DESC, id DESC`
-  ).all<{
+  const q = (c.req.query("q") ?? "").trim();
+  const pageQ = c.req.query("page");
+  const perPageQ = c.req.query("perPage") ?? c.req.query("per_page");
+  const limitQ = c.req.query("limit");
+  const offsetQ = c.req.query("offset");
+  const hasPage = pageQ != null && pageQ !== "";
+  const hasLimit = limitQ != null && limitQ !== "";
+  const perPage = Math.min(50, Math.max(1, parseInt(String(perPageQ ?? "10"), 10) || 10));
+  const orderSql = "ORDER BY datetime(published_at) DESC, id DESC";
+
+  let whereSql = "1=1";
+  const binds: (string | number)[] = [];
+  if (q.length > 0) {
+    const like = `%${q.replace(/"/g, "")}%`;
+    whereSql +=
+      " AND (title LIKE ? OR issue_number LIKE ? OR file_name LIKE ? OR (published_at IS NOT NULL AND published_at LIKE ?))";
+    binds.push(like, like, like, like);
+  }
+
+  const countRow = await c.env.DB
+    .prepare(`SELECT COUNT(*) as c FROM gazettes WHERE ${whereSql}`)
+    .bind(...binds)
+    .first<{ c: number }>();
+  const total = countRow?.c ?? 0;
+
+  const baseSelect = `SELECT id, title, issue_number, published_at, file_name, file_size, mime FROM gazettes WHERE ${whereSql} ${orderSql}`;
+
+  type GazRow = {
     id: number;
     title: string;
     issue_number: string;
@@ -446,8 +529,30 @@ app.get("/api/gazettes", async (c) => {
     file_name: string;
     file_size: number;
     mime: string;
-  }>();
-  return c.json({ items: rows.results ?? [] });
+  };
+
+  if (hasPage) {
+    const page = Math.max(1, parseInt(String(pageQ), 10) || 1);
+    const offset = (page - 1) * perPage;
+    const listBinds = [...binds, perPage, offset];
+    const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<GazRow>();
+    return c.json({
+      items: rows.results ?? [],
+      total,
+      page,
+      perPage,
+      totalPages: Math.max(1, Math.ceil(total / perPage)),
+    });
+  }
+  if (hasLimit) {
+    const limit = Math.min(100, Math.max(1, parseInt(String(limitQ), 10) || 10));
+    const offset = Math.max(0, parseInt(String(offsetQ ?? "0"), 10) || 0);
+    const listBinds = [...binds, limit, offset];
+    const rows = await c.env.DB.prepare(`${baseSelect} LIMIT ? OFFSET ?`).bind(...listBinds).all<GazRow>();
+    return c.json({ items: rows.results ?? [], total, limit, offset });
+  }
+  const rows = await c.env.DB.prepare(baseSelect).bind(...binds).all<GazRow>();
+  return c.json({ items: rows.results ?? [], total });
 });
 
 app.get("/api/gazettes/:id/download", async (c) => {

@@ -1,0 +1,27 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import GacetasSearchIsland from "../../components/GacetasSearchIsland";
+---
+
+<BaseLayout title="Buscar gacetas — Consejo Municipal de Palavecino">
+  <div class="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+    <a
+      href="/gacetas"
+      class="mb-6 inline-flex items-center gap-2 text-sm font-semibold text-brand transition hover:text-brand-dark dark:text-brand-muted"
+    >
+      <span aria-hidden="true">←</span>
+      Volver a gacetas
+    </a>
+    <header>
+      <h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">Buscar gacetas</h1>
+      <p class="mt-2 max-w-2xl text-slate-600 dark:text-slate-400">
+        Busque por título, número de edición, nombre del archivo o fecha. Hasta 10 resultados por página.
+      </p>
+    </header>
+    <div
+      class="mt-8 rounded-2xl border border-slate-200 bg-card p-4 text-card-foreground dark:border-slate-700 md:p-6"
+    >
+      <GacetasSearchIsland client:load />
+    </div>
+  </div>
+</BaseLayout>

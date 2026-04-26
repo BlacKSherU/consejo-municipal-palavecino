@@ -106,13 +106,24 @@ Desarrollo local: copia [`apps/api/.dev.vars.example`](apps/api/.dev.vars.exampl
 1. Crea base **D1** y bucket **R2** en el dashboard o con Wrangler.
 2. Copia el `database_id` real en [`apps/api/wrangler.toml`](apps/api/wrangler.toml) y el nombre del bucket.
 3. En el Worker (dashboard o `wrangler secret put` / Variables): configura la tabla anterior.
-4. Despliega:
+4. **Despliega el Worker** (desde el PC con sesión de Cloudflare: `npx wrangler login`):
 
    ```bash
    cd apps/api
+   npm install
    npm run deploy
-   npx wrangler d1 migrations apply cmp-db --remote
    ```
+
+5. **Migraciones D1 en producción** (cada vez que añade migraciones en `apps/api/migrations/`):
+
+   ```bash
+   npm run db:migrate:remote
+   # o, desde la raíz del monorepo:
+   # npm run db:migrate:remote
+   ```
+
+6. Comprueba la URL pública del Worker: en el navegador debe abrirse un JSON con `"service":"cmp-api"`.  
+   Si recibes **404** en `https://TU-SUBDOMINIO.workers.dev/`, el Worker no está en esa URL o no se ha desplegado la última versión; vuelve a `npm run deploy` en `apps/api` o revisa el **nombre** del Worker en el [dashboard de Cloudflare](https://dash.cloudflare.com/) (debe coincidir con el `name` de `apps/api/wrangler.toml` y con `PUBLIC_API_URL` de Pages, ver tabla arriba).
 
 ### Pages (sitio Astro)
 

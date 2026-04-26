@@ -9,7 +9,8 @@
     "dev:api": "npm run dev --workspace=@cmp/api",
     "build": "npm run build --workspace=@cmp/web",
     "deploy:api": "npm run deploy --workspace=@cmp/api",
-    "db:migrate:local": "npm run db:migrate:local --workspace=@cmp/api"
+    "db:migrate:local": "npm run db:migrate:local --workspace=@cmp/api",
+    "db:migrate:remote": "npm run db:migrate:remote --workspace=@cmp/api"
   },
   "engines": {
     "node": ">=18.17"

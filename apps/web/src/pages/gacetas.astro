@@ -1,5 +1,6 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import GacetasHomeIsland from "../components/GacetasHomeIsland";
 ---
 
 <BaseLayout title="Gacetas oficiales — Consejo Municipal de Palavecino">
@@ -23,36 +24,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       </div>
     </header>
 
+    <p class="mt-4 text-center text-sm text-slate-600 dark:text-slate-400">
+      <a href="/gacetas/buscar" class="font-semibold text-brand hover:underline dark:text-brand-muted">Buscar todas las gacetas</a>
+      (por título, número, archivo o fecha).
+    </p>
+
     <div
-      class="mt-12 overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-lg shadow-brand/5 backdrop-blur-sm dark:border-slate-700/80 dark:bg-slate-900/90 dark:shadow-brand/10"
+      class="mt-8 rounded-2xl border border-slate-200/90 bg-white/95 shadow-lg shadow-brand/5 backdrop-blur-sm dark:border-slate-700/80 dark:bg-slate-900/90 dark:shadow-brand/10"
     >
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-left text-sm">
-          <thead>
-            <tr
-              class="border-b border-slate-200 bg-gradient-to-r from-slate-50 to-white dark:border-slate-700 dark:from-slate-800 dark:to-slate-900"
-            >
-              <th scope="col" class="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-100">Título</th>
-              <th scope="col" class="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-100">Número</th>
-              <th scope="col" class="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-100">Fecha</th>
-              <th scope="col" class="px-4 py-3.5 font-semibold text-slate-800 dark:text-slate-100">Descarga</th>
-            </tr>
-          </thead>
-          <tbody id="gazette-rows">
-            <tr class="border-b border-slate-100 dark:border-slate-800">
-              <td colspan="4" class="px-4 py-10 text-center text-slate-500 dark:text-slate-400" aria-live="polite">
-                Cargando…
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <GacetasHomeIsland client:load />
     </div>
-    <p id="gazette-err" class="mt-4 text-center text-sm text-red-600 dark:text-red-400"></p>
   </div>
 </BaseLayout>
-
-<script>
-  import { initGacetasPage } from "../scripts/load-gacetas-page";
-  void initGacetasPage();
-</script>
