@@ -1,11 +1,12 @@
 import { FileText, Search } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { List2, type List2Item } from "@/components/ui/list-2";
 import { apiUrl } from "@/lib/api";
 
 const PER = 5;
+const Q_DEBOUNCE_MS = 350;
 
 type ApiNews = {
   slug: string;
@@ -36,13 +37,13 @@ function syncUrl(q: string, page: number) {
 
 export default function NewsSearchIsland() {
   const [qInput, setQInput] = useState("");
-  const [q, setQ] = useState("");
   const [page, setPage] = useState(1);
   const [items, setItems] = useState<ApiNews[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const qDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const load = useCallback(
     async (search: string, p: number) => {
@@ -83,25 +84,56 @@ export default function NewsSearchIsland() {
     const initQ = pr.get("q") || "";
     const initP = Math.max(1, parseInt(pr.get("page") || "1", 10) || 1);
     setQInput(initQ);
-    setQ(initQ);
     setPage(initP);
     void load(initQ, initP);
   }, [load]);
 
-  const onSearch = (e: React.FormEvent) => {
+  useEffect(
+    () => () => {
+      if (qDebounce.current) clearTimeout(qDebounce.current);
+    },
+    [],
+  );
+
+  const runTextSearch = useCallback(
+    (search: string) => {
+      setPage(1);
+      syncUrl(search, 1);
+      void load(search, 1);
+    },
+    [load],
+  );
+
+  const scheduleTextSearch = useCallback(
+    (value: string) => {
+      if (qDebounce.current) clearTimeout(qDebounce.current);
+      qDebounce.current = setTimeout(() => {
+        runTextSearch(value);
+        qDebounce.current = null;
+      }, Q_DEBOUNCE_MS);
+    },
+    [runTextSearch],
+  );
+
+  const onQChange = (value: string) => {
+    setQInput(value);
+    scheduleTextSearch(value);
+  };
+
+  const onSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const nextQ = qInput;
-    setQ(nextQ);
-    setPage(1);
-    syncUrl(nextQ, 1);
-    void load(nextQ, 1);
+    if (qDebounce.current) {
+      clearTimeout(qDebounce.current);
+      qDebounce.current = null;
+    }
+    runTextSearch(qInput);
   };
 
   const goPage = (p: number) => {
     const next = Math.max(1, Math.min(totalPages, p));
     setPage(next);
-    syncUrl(q, next);
-    void load(q, next);
+    syncUrl(qInput, next);
+    void load(qInput, next);
   };
 
   const listItems: List2Item[] = items.map((n) => {
@@ -121,24 +153,27 @@ export default function NewsSearchIsland() {
 
   return (
     <div>
-      <form onSubmit={onSearch} className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <label htmlFor="cmp-news-search" className="text-sm font-medium text-foreground">
-            Buscar en título, resumen, fecha o enlace
-          </label>
-          <Input
-            id="cmp-news-search"
-            value={qInput}
-            onChange={(e) => setQInput(e.target.value)}
-            placeholder="Palabras o parte de la fecha (ej. 2026)…"
-            className="w-full"
-            autoComplete="off"
-          />
+      <form onSubmit={onSearchSubmit} className="mb-8">
+        <div className="min-w-0 flex-1">
+          <p className="mb-1.5 text-sm font-medium text-foreground" id="cmp-news-hint">
+            Buscar por título, resumen o fecha
+          </p>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              id="cmp-news-search"
+              value={qInput}
+              onChange={(e) => onQChange(e.target.value)}
+              placeholder="Palabras o parte de la fecha (ej. 2026)…"
+              className="h-10 w-full pl-9"
+              autoComplete="off"
+              aria-describedby="cmp-news-hint"
+            />
+          </div>
         </div>
-        <Button type="submit" className="w-full sm:w-auto">
-          <Search className="h-4 w-4" />
-          Buscar
-        </Button>
       </form>
 
       {err && <p className="mb-4 text-sm text-destructive">{err}</p>}
@@ -152,7 +187,7 @@ export default function NewsSearchIsland() {
             items={listItems}
             actionLabel="Leer noticia"
             sectionClassName="py-0"
-            emptyMessage="No se encontraron noticias. Pruebe otras palabras o revise la fecha."
+            emptyMessage="No se encontraron noticias. Pruebe otras palabras o revise la fecha en el texto de búsqueda."
           />
           {total > 0 && (total > PER || totalPages > 1) && (
             <nav className="mt-8 flex flex-col items-center gap-3" aria-label="Paginación de resultados">

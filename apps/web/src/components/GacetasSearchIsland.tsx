@@ -1,6 +1,6 @@
 import { formatDateRange } from "little-date";
 import { CalendarIcon, ChevronDown, FileDown, Search, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -11,6 +11,7 @@ import { apiUrl } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const PER = 5;
+const Q_DEBOUNCE_MS = 350;
 
 type Gazette = {
   id: number;
@@ -60,6 +61,10 @@ function syncUrl(q: string, page: number, dateFrom: string, dateTo: string) {
   window.history.replaceState({}, "", qs ? `${path}?${qs}` : path);
 }
 
+function isRangePartial(r: DateRange | undefined): boolean {
+  return Boolean(r?.from) && !r?.to;
+}
+
 export default function GacetasSearchIsland() {
   const [qInput, setQInput] = useState("");
   const [q, setQ] = useState("");
@@ -67,12 +72,21 @@ export default function GacetasSearchIsland() {
   const [dateFromYmd, setDateFromYmd] = useState("");
   const [dateToYmd, setDateToYmd] = useState("");
   const [range, setRange] = useState<DateRange | undefined>(undefined);
+  const rangeRef = useRef<DateRange | undefined>(undefined);
   const [items, setItems] = useState<Gazette[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [datePopoverOpen, setDatePopoverOpen] = useState(false);
+  const qDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dateFromRef = useRef("");
+  const dateToRef = useRef("");
+
+  useEffect(() => {
+    dateFromRef.current = dateFromYmd;
+    dateToRef.current = dateToYmd;
+  }, [dateFromYmd, dateToYmd]);
 
   const load = useCallback(async (search: string, p: number, dFrom: string, dTo: string) => {
     setLoading(true);
@@ -112,6 +126,10 @@ export default function GacetasSearchIsland() {
   }, []);
 
   useEffect(() => {
+    rangeRef.current = range;
+  }, [range]);
+
+  useEffect(() => {
     const pr = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
     const initQ = pr.get("q") || "";
     const initP = Math.max(1, parseInt(pr.get("page") || "1", 10) || 1);
@@ -122,53 +140,113 @@ export default function GacetasSearchIsland() {
     setPage(initP);
     setDateFromYmd(initFrom);
     setDateToYmd(initTo);
+    dateFromRef.current = initFrom;
+    dateToRef.current = initTo;
     if (initFrom || initTo) {
-      setRange({
+      const r = {
         from: initFrom ? parseYmd(initFrom) : undefined,
         to: initTo ? parseYmd(initTo) : undefined,
-      });
+      };
+      setRange(r);
+      rangeRef.current = r;
     } else {
       setRange(undefined);
+      rangeRef.current = undefined;
     }
     void load(initQ, initP, initFrom, initTo);
   }, [load]);
 
-  const onSearch = (e: React.FormEvent) => {
+  useEffect(
+    () => () => {
+      if (qDebounce.current) clearTimeout(qDebounce.current);
+    },
+    [],
+  );
+
+  const runTextSearch = useCallback(
+    (search: string) => {
+      const dF = dateFromRef.current;
+      const dT = dateToRef.current;
+      setQ(search);
+      setPage(1);
+      syncUrl(search, 1, dF, dT);
+      void load(search, 1, dF, dT);
+    },
+    [load],
+  );
+
+  const scheduleTextSearch = useCallback(
+    (value: string) => {
+      if (qDebounce.current) clearTimeout(qDebounce.current);
+      qDebounce.current = setTimeout(() => {
+        runTextSearch(value);
+        qDebounce.current = null;
+      }, Q_DEBOUNCE_MS);
+    },
+    [runTextSearch],
+  );
+
+  const onQChange = (value: string) => {
+    setQInput(value);
+    scheduleTextSearch(value);
+  };
+
+  const onSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setQ(qInput);
-    setPage(1);
-    syncUrl(qInput, 1, dateFromYmd, dateToYmd);
-    void load(qInput, 1, dateFromYmd, dateToYmd);
+    if (qDebounce.current) {
+      clearTimeout(qDebounce.current);
+      qDebounce.current = null;
+    }
+    runTextSearch(qInput);
   };
 
   const goPage = (p: number) => {
     const next = Math.max(1, Math.min(totalPages, p));
     setPage(next);
-    syncUrl(q, next, dateFromYmd, dateToYmd);
-    void load(q, next, dateFromYmd, dateToYmd);
+    syncUrl(qInput, next, dateFromYmd, dateToYmd);
+    void load(qInput, next, dateFromYmd, dateToYmd);
   };
 
   const applyRange = (r: DateRange | undefined) => {
     setRange(r);
+    rangeRef.current = r;
     const from = toYmd(r?.from);
     const to = toYmd(r?.to);
     setDateFromYmd(from);
     setDateToYmd(to);
+    dateFromRef.current = from;
+    dateToRef.current = to;
     if (from && to) {
       setPage(1);
       setDatePopoverOpen(false);
-      syncUrl(q, 1, from, to);
-      void load(q, 1, from, to);
+      setQ(qInput);
+      syncUrl(qInput, 1, from, to);
+      void load(qInput, 1, from, to);
     }
   };
 
   const clearDateFilter = () => {
     setRange(undefined);
+    rangeRef.current = undefined;
     setDateFromYmd("");
     setDateToYmd("");
+    dateFromRef.current = "";
+    dateToRef.current = "";
     setPage(1);
-    syncUrl(q, 1, "", "");
-    void load(q, 1, "", "");
+    setDatePopoverOpen(false);
+    syncUrl(qInput, 1, "", "");
+    void load(qInput, 1, "", "");
+  };
+
+  const onDateOpenChange = (o: boolean) => {
+    if (o) {
+      setDatePopoverOpen(true);
+      return;
+    }
+    if (isRangePartial(rangeRef.current)) {
+      return;
+    }
+    setDatePopoverOpen(false);
   };
 
   const listItems: List2Item[] = items.map((g) => {
@@ -191,43 +269,59 @@ export default function GacetasSearchIsland() {
 
   return (
     <div>
-      <form onSubmit={onSearch} className="mb-8 space-y-4">
+      <form onSubmit={onSearchSubmit} className="mb-6">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:gap-3">
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <label htmlFor="cmp-gac-search" className="text-sm font-medium text-foreground">
-              Buscar por título, número, nombre de archivo o texto en fecha
-            </label>
-            <Input
-              id="cmp-gac-search"
-              value={qInput}
-              onChange={(e) => setQInput(e.target.value)}
-              placeholder="Ej. 2025, GO-, ordenanza…"
-              className="w-full"
-              autoComplete="off"
-            />
+          <div className="min-w-0 flex-1">
+            <p className="mb-1.5 text-sm font-medium text-foreground" id="gac-search-hint">
+              Buscar por título, número o nombre de archivo
+            </p>
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                aria-hidden
+              />
+              <Input
+                id="cmp-gac-search"
+                value={qInput}
+                onChange={(e) => onQChange(e.target.value)}
+                placeholder="Ej. 2025, GO-, ordenanza…"
+                className="h-10 w-full pl-9"
+                autoComplete="off"
+                aria-describedby="gac-search-hint"
+              />
+            </div>
           </div>
-          <div className="flex w-full flex-col gap-1.5 sm:w-auto sm:min-w-[12rem]">
-            <span className="text-sm font-medium text-foreground">Fecha de publicación</span>
-            <div className="flex flex-wrap items-end gap-2">
-              <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+          <div className="w-full shrink-0 lg:w-auto">
+            <p className="mb-1.5 text-sm font-medium text-foreground">Fecha de publicación</p>
+            <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:gap-2">
+              <Popover open={datePopoverOpen} onOpenChange={onDateOpenChange} modal={false}>
                 <PopoverTrigger asChild>
                   <Button
                     type="button"
                     id="gac-dates"
                     variant="outline"
                     className={cn(
-                      "h-10 w-full min-w-[12rem] justify-between font-normal sm:max-w-[20rem] lg:min-w-[14rem]",
+                      "h-10 w-full min-w-[12rem] justify-between font-normal lg:min-w-[16rem] xl:min-w-[18rem]",
                     )}
                     aria-label="Elegir rango de fechas de publicación"
                   >
-                    <span className="inline-flex items-center gap-2 truncate">
+                    <span className="inline-flex min-w-0 items-center gap-2">
                       <CalendarIcon className="h-4 w-4 shrink-0" />
-                      <span className="truncate">{rangeButtonLabel}</span>
+                      <span className="truncate text-left">{rangeButtonLabel}</span>
                     </span>
                     <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+                <PopoverContent
+                  className="w-auto overflow-hidden p-0"
+                  align="start"
+                  onPointerDownOutside={(e) => {
+                    if (isRangePartial(rangeRef.current)) e.preventDefault();
+                  }}
+                  onInteractOutside={(e) => {
+                    if (isRangePartial(rangeRef.current)) e.preventDefault();
+                  }}
+                >
                   <div className="p-1">
                     <Calendar
                       mode="range"
@@ -254,25 +348,16 @@ export default function GacetasSearchIsland() {
                   </div>
                 </PopoverContent>
               </Popover>
-              {(dateFromYmd || dateToYmd) && (
-                <span className="text-xs text-muted-foreground" aria-live="polite">
-                  {dateFromYmd && dateToYmd
-                    ? `Filtro activo: ${dateFromYmd} al ${dateToYmd}`
-                    : "Elija inicio y fin en el calendario"}
-                </span>
-              )}
             </div>
           </div>
-          <div className="flex w-full flex-col justify-end sm:flex-row sm:items-end sm:gap-2 lg:w-auto">
-            <Button type="submit" className="h-10 w-full sm:min-w-[7rem]">
-              <Search className="h-4 w-4" />
-              Buscar
-            </Button>
-          </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Puede combinar búsqueda con rango: las gacetas deben publicarse entre las dos fechas (inclusive).
-        </p>
+        {(dateFromYmd || dateToYmd) && (
+          <p className="mt-2 text-xs text-muted-foreground" aria-live="polite">
+            {dateFromYmd && dateToYmd
+              ? `Filtro de fechas: ${dateFromYmd} a ${dateToYmd} (inclusive).`
+              : "Seleccione un día de inicio y otro de fin en el calendario."}
+          </p>
+        )}
       </form>
 
       {err && <p className="mb-4 text-sm text-destructive">{err}</p>}
