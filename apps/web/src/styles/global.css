@@ -5,5 +5,12 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    height: 100%;
+  }
+
+  /* Respaldo: el pie del sitio público debe anclarse al borde inferior del viewport con poco contenido. */
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
   }
 }
