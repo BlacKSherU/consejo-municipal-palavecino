@@ -84,5 +84,5 @@ export default function NewsListIsland() {
   if (err) {
     return <p className="text-sm text-red-600">{err}</p>;
   }
-  return <NewsCards newsCards={cards} enableAnimations newsUi={newsUi} />;
+  return <NewsCards newsCards={cards} enableAnimations hideIntro newsUi={newsUi} />;
 }

@@ -1,10 +1,12 @@
 /**
- * Genera el INSERT para un usuario admin (hash PBKDF2 compatible con el Worker).
+ * Genera SQL para un usuario admin (hash PBKDF2 compatible con el Worker).
  *
  * Uso:
  *   node scripts/seed-admin.mjs tu@email.com tu_contraseña
+ *   node scripts/seed-admin.mjs tu@email.com tu_nueva_clave --update
  *   node scripts/seed-admin.mjs tu@email.com tu_contraseña --write
  *
+ * --update  →  UPDATE (restablecer contraseña olvidada en D1; mismo email)
  * Con --write crea seed-admin.sql en el directorio actual (listo para wrangler).
  */
 import { pbkdf2Sync, randomBytes } from "node:crypto";
@@ -24,25 +26,36 @@ function hashPassword(plain) {
   return `pbkdf2:${ITERATIONS}:${toB64(salt)}:${toB64(hash)}`;
 }
 
-const args = process.argv.slice(2).filter((a) => a !== "--write");
 const writeFile = process.argv.includes("--write");
+const isUpdate = process.argv.includes("--update");
+const args = process.argv.slice(2).filter((a) => a !== "--write" && a !== "--update");
 
 const email = (args[0] || "admin@example.com").trim().toLowerCase();
 const password = args[1] || "admin123";
 const record = hashPassword(password);
-const sql = `INSERT INTO admin_users (email, password_record) VALUES ('${email.replace(/'/g, "''")}', '${record.replace(/'/g, "''")}');`;
+const q = (s) => s.replace(/'/g, "''");
+const safeEmail = q(email);
+const safeRecord = q(record);
 
-console.log("-- SQL generado:\n");
+const sql = isUpdate
+  ? `UPDATE admin_users SET password_record = '${safeRecord}' WHERE email = '${safeEmail}';`
+  : `INSERT INTO admin_users (email, password_record) VALUES ('${safeEmail}', '${safeRecord}');`;
+
+console.log(`-- SQL generado ${isUpdate ? "(UPDATE — nueva contraseña)" : "(INSERT — usuario nuevo)"}:\n`);
 console.log(sql);
 console.log("");
 
 if (writeFile) {
-  const out = "seed-admin.sql";
+  const out = isUpdate ? "reset-admin-password.sql" : "seed-admin.sql";
   writeFileSync(out, sql + "\n", "utf8");
   console.log(`Escrito en ${out}`);
-  console.log("  npx wrangler d1 execute cmp-db --remote --file=seed-admin.sql");
-  console.log("  npx wrangler d1 execute cmp-db --local --file=seed-admin.sql");
+  console.log("  npx wrangler d1 execute cmp-db --remote --file=" + out);
+  console.log("  npx wrangler d1 execute cmp-db --local --file=" + out);
 } else {
-  console.log('Opcional: añade --write para crear seed-admin.sql y ejecutar con:');
-  console.log("  npx wrangler d1 execute cmp-db --remote --file=seed-admin.sql");
+  console.log("Opcional: --write genera el .sql y añade --update para restablecer contraseña (UPDATE).");
+  if (!isUpdate) {
+    console.log("  npx wrangler d1 execute cmp-db --remote --file=seed-admin.sql");
+  } else {
+    console.log("  npx wrangler d1 execute cmp-db --remote --file=reset-admin-password.sql  # tras --write con --update");
+  }
 }

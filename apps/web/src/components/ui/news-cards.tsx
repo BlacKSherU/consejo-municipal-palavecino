@@ -32,6 +32,8 @@ export interface NewsCardsProps {
   statusBars?: StatusBar[];
   newsCards?: NewsCard[];
   enableAnimations?: boolean;
+  /** Oculta el bloque de título animado (cuando la página ya tiene cabecera hero). */
+  hideIntro?: boolean;
   /** Estilos de imagen / modal desde panel admin. */
   newsUi?: ResolvedNewsUi;
 }
@@ -54,6 +56,7 @@ export function NewsCards({
   statusBars = defaultStatusBars,
   newsCards = [],
   enableAnimations = true,
+  hideIntro = false,
   newsUi: newsUiProp,
 }: NewsCardsProps) {
   const newsUi = newsUiProp ?? resolveNewsUi(defaultPublicUiConfig);
@@ -151,9 +154,13 @@ export function NewsCards({
   if (newsCards.length === 0) {
     return (
       <div className="mx-auto w-full max-w-6xl bg-background p-6 text-foreground">
-        <h1 className="mb-2 text-4xl font-bold">{title}</h1>
-        <p className="text-lg text-muted-foreground">{subtitle}</p>
-        <p className="mt-8 text-muted-foreground">No hay noticias publicadas.</p>
+        {!hideIntro && (
+          <>
+            <h1 className="mb-2 text-4xl font-bold">{title}</h1>
+            <p className="text-lg text-muted-foreground">{subtitle}</p>
+          </>
+        )}
+        <p className={cn("text-muted-foreground", hideIntro ? "" : "mt-8")}>No hay noticias publicadas.</p>
       </div>
     );
   }
@@ -165,35 +172,37 @@ export function NewsCards({
       animate={isLoaded ? "visible" : "hidden"}
       variants={shouldAnimate ? containerVariants : {}}
     >
-      <motion.div className="mb-8" variants={shouldAnimate ? headerVariants : {}}>
-        <h1 className="mb-2 text-4xl font-bold">{title}</h1>
-        <p className="text-lg text-muted-foreground">{subtitle}</p>
+      {!hideIntro && (
+        <motion.div className="mb-8" variants={shouldAnimate ? headerVariants : {}}>
+          <h1 className="mb-2 text-4xl font-bold">{title}</h1>
+          <p className="text-lg text-muted-foreground">{subtitle}</p>
 
-        <motion.div className="mt-6 space-y-1" variants={shouldAnimate ? statusBarContainerVariants : {}}>
-          {statusBars.map((bar, index) => (
-            <motion.div
-              key={bar.id}
-              className={cn(
-                "h-0.5 rounded-full bg-foreground",
-                bar.id === "1" ? "bg-foreground/80" : bar.id === "2" ? "bg-foreground/60" : "bg-foreground/40",
-              )}
-              style={{
-                opacity: bar.opacity,
-                width: `${(bar.length / 3) * 100}%`,
-              }}
-              variants={shouldAnimate ? statusBarVariants : {}}
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{
-                delay: 0.3 + index * 0.1,
-                type: "spring",
-                stiffness: 400,
-                damping: 30,
-              }}
-            />
-          ))}
+          <motion.div className="mt-6 space-y-1" variants={shouldAnimate ? statusBarContainerVariants : {}}>
+            {statusBars.map((bar, index) => (
+              <motion.div
+                key={bar.id}
+                className={cn(
+                  "h-0.5 rounded-full bg-foreground",
+                  bar.id === "1" ? "bg-foreground/80" : bar.id === "2" ? "bg-foreground/60" : "bg-foreground/40",
+                )}
+                style={{
+                  opacity: bar.opacity,
+                  width: `${(bar.length / 3) * 100}%`,
+                }}
+                variants={shouldAnimate ? statusBarVariants : {}}
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{
+                  delay: 0.3 + index * 0.1,
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 30,
+                }}
+              />
+            ))}
+          </motion.div>
         </motion.div>
-      </motion.div>
+      )}
 
       <LayoutGroup>
         <motion.div
