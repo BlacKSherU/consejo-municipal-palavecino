@@ -1,30 +1,8 @@
 ---
+import { AdminInstagramIsland } from "../../components/admin/AdminInstagramIsland";
 import AdminShellLayout from "../../layouts/AdminShellLayout.astro";
 ---
 
 <AdminShellLayout title="Instagram">
-  <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Instagram</h1>
-  <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-    Actualiza la caché desde la API Graph (Meta). Configure <code class="rounded bg-slate-200 px-1 dark:bg-slate-800">META_ACCESS_TOKEN</code> e
-    <code class="rounded bg-slate-200 px-1 dark:bg-slate-800">INSTAGRAM_USER_ID</code> en el Worker.
-  </p>
-  <button
-    type="button"
-    id="ig-refresh"
-    class="mt-6 rounded-xl bg-brand px-6 py-2 text-sm font-semibold text-white"
-  >
-    Actualizar ahora
-  </button>
-  <pre id="ig-out" class="mt-6 overflow-x-auto rounded-xl bg-slate-100 p-4 text-xs dark:bg-slate-900"></pre>
+  <AdminInstagramIsland client:load />
 </AdminShellLayout>
-
-<script>
-  import { apiFetch } from "../../lib/api";
-
-  document.getElementById("ig-refresh")?.addEventListener("click", async () => {
-    const out = document.getElementById("ig-out");
-    const res = await apiFetch("/api/admin/instagram/refresh", { method: "POST" });
-    const data = await res.json();
-    if (out) out.textContent = JSON.stringify(data, null, 2);
-  });
-</script>
