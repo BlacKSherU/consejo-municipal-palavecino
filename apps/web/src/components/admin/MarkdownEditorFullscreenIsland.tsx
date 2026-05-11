@@ -1,5 +1,5 @@
-import { marked } from "marked";
 import { ArrowLeft, Save } from "lucide-react";
+import { renderMarkdown } from "@/lib/markdown";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { MarkdownDemoButton } from "@/components/admin/MarkdownDemoButton";
 import { Button } from "@/components/ui/button";
@@ -28,9 +28,8 @@ export function MarkdownEditorFullscreenIsland() {
   }, []);
 
   const html = useMemo(() => {
-    const t = text.trim();
-    if (!t) return null;
-    return marked.parse(t, { async: false }) as string;
+    const rendered = renderMarkdown(text);
+    return rendered.length ? rendered : null;
   }, [text]);
 
   const lineCount = text.split("\n").length;

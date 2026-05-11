@@ -1,8 +1,8 @@
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { BookmarkIcon, X } from "lucide-react";
-import { marked } from "marked";
-import { useEffect, useState, type MouseEvent } from "react";
+import { useCallback, useEffect, useState, type MouseEvent } from "react";
 import { apiUrl } from "@/lib/api";
+import { renderMarkdown } from "@/lib/markdown";
 import { defaultPublicUiConfig, resolveNewsUi, type ResolvedNewsUi } from "@/lib/public-ui";
 import { cn } from "@/lib/utils";
 
@@ -62,7 +62,7 @@ export function NewsCards({
   const shouldReduceMotion = useReducedMotion();
   const shouldAnimate = enableAnimations && !shouldReduceMotion;
 
-  const toggleBookmark = (cardId: string, e: MouseEvent) => {
+  const toggleBookmark = useCallback((cardId: string, e: MouseEvent) => {
     e.stopPropagation();
     setBookmarkedCards((prev) => {
       const next = new Set(prev);
@@ -70,12 +70,14 @@ export function NewsCards({
       else next.add(cardId);
       return next;
     });
-  };
+  }, []);
 
   const openCard = async (card: NewsCard) => {
     setSelectedCard({ ...card, bodyHtml: undefined });
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 12_000);
     try {
-      const res = await fetch(apiUrl("/api/news/" + encodeURIComponent(card.slug)));
+      const res = await fetch(apiUrl("/api/news/" + encodeURIComponent(card.slug)), { signal: ctrl.signal });
       if (!res.ok) {
         setSelectedCard((prev) =>
           prev && prev.id === card.id
@@ -88,9 +90,9 @@ export function NewsCards({
         return;
       }
       const n = (await res.json()) as { body?: string };
-      const raw = (n.body ?? "").trim();
-      const bodyHtml = raw.length
-        ? (marked.parse(raw, { async: false }) as string)
+      const rendered = renderMarkdown(n.body);
+      const bodyHtml = rendered.length
+        ? rendered
         : "<p class=\"text-muted-foreground\">Esta noticia aún no tiene cuerpo publicado.</p>";
       setSelectedCard((prev) => (prev && prev.id === card.id ? { ...prev, bodyHtml } : prev));
     } catch {
@@ -102,6 +104,8 @@ export function NewsCards({
             }
           : prev,
       );
+    } finally {
+      clearTimeout(timeout);
     }
   };
 
@@ -246,6 +250,8 @@ export function NewsCards({
                   <img
                     src={card.image}
                     alt=""
+                    loading="lazy"
+                    decoding="async"
                     className={cn(
                       "h-full w-full transform-gpu object-cover transition-transform duration-700 ease-out",
                       newsUi.cardHoverLift && "group-hover:scale-105",
@@ -346,7 +352,7 @@ export function NewsCards({
                   layoutId={`card-image-${selectedCard.id}`}
                   className={cn("w-full shrink-0", newsUi.modalImageContainerClass)}
                 >
-                  <img src={selectedCard.image} alt="" className="h-full w-full object-cover" />
+                  <img src={selectedCard.image} alt="" decoding="async" className="h-full w-full object-cover" />
                   <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background/90 to-transparent" />
                   {selectedCard.gradientColors?.[0] && selectedCard.gradientColors[1] && (
                     <div

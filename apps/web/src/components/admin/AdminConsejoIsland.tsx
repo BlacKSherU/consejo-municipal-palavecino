@@ -8,6 +8,8 @@ import { AdminFormSection } from "@/components/admin/AdminFormSection";
 import { OrderFieldLabelWithHint } from "@/components/admin/OrderFieldHint";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
@@ -72,6 +74,7 @@ export function AdminConsejoIsland() {
   const [photoErr, setPhotoErr] = useState<Record<number, string | undefined>>({});
   const [editingPosId, setEditingPosId] = useState<number | null>(null);
   const [editingMemId, setEditingMemId] = useState<number | null>(null);
+  const { confirm, ConfirmDialog } = useConfirm();
   const [newMemberPhoto, setNewMemberPhoto] = useState<File | null>(null);
   const [newMemberPhotoErr, setNewMemberPhotoErr] = useState<string | null>(null);
 
@@ -249,7 +252,8 @@ export function AdminConsejoIsland() {
   return (
     <div className="max-w-5xl space-y-10">
       <h1 className="text-2xl font-bold text-foreground">Puestos y consejales</h1>
-      {loadErr ? <p className="text-sm text-destructive">{loadErr}</p> : null}
+      <ConfirmDialog />
+      {loadErr ? <ErrorBanner message={loadErr} onRetry={() => void load()} /> : null}
 
       <Form {...posForm}>
         <form onSubmit={posForm.handleSubmit(onAddPosition)}>
@@ -365,8 +369,15 @@ export function AdminConsejoIsland() {
                       type="button"
                       variant="ghost"
                       className="text-destructive hover:bg-destructive/10"
+                      aria-label={`Eliminar puesto: ${p.name}`}
                       onClick={async () => {
-                        if (!confirm("¿Eliminar puesto y consejales asociados?")) return;
+                        const ok = await confirm({
+                          title: "¿Eliminar puesto?",
+                          description: `Se eliminará «${p.name}» y todos los consejales asociados.`,
+                          confirmLabel: "Eliminar",
+                          destructive: true,
+                        });
+                        if (!ok) return;
                         await apiFetch("/api/admin/council/positions/" + p.id, { method: "DELETE" });
                         setEditingPosId((id) => (id === p.id ? null : id));
                         void load();
@@ -640,8 +651,15 @@ export function AdminConsejoIsland() {
                               type="button"
                               variant="ghost"
                               className="ms-auto text-destructive hover:bg-destructive/10"
+                              aria-label={`Eliminar consejal: ${m.full_name}`}
                               onClick={async () => {
-                                if (!confirm("¿Eliminar consejal?")) return;
+                                const ok = await confirm({
+                                  title: "¿Eliminar consejal?",
+                                  description: `«${m.full_name}» se eliminará de forma permanente.`,
+                                  confirmLabel: "Eliminar",
+                                  destructive: true,
+                                });
+                                if (!ok) return;
                                 setEditingMemId((id) => (id === m.id ? null : id));
                                 await apiFetch("/api/admin/council/members/" + m.id, { method: "DELETE" });
                                 void load();
@@ -686,8 +704,15 @@ export function AdminConsejoIsland() {
                             type="button"
                             variant="ghost"
                             className="text-destructive hover:bg-destructive/10"
+                            aria-label={`Eliminar consejal: ${m.full_name}`}
                             onClick={async () => {
-                              if (!confirm("¿Eliminar consejal?")) return;
+                              const ok = await confirm({
+                                title: "¿Eliminar consejal?",
+                                description: `«${m.full_name}» se eliminará de forma permanente.`,
+                                confirmLabel: "Eliminar",
+                                destructive: true,
+                              });
+                              if (!ok) return;
                               await apiFetch("/api/admin/council/members/" + m.id, { method: "DELETE" });
                               setEditingMemId((id) => (id === m.id ? null : id));
                               void load();

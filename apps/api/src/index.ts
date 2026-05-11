@@ -60,6 +60,47 @@ app.get("/", (c) =>
 
 app.get("/health", (c) => c.json({ ok: true }));
 
+// Rate limit en memoria por isolate. Suficiente para frenar fuerza bruta trivial.
+// Para producción robusta, migrar a Durable Object o Cloudflare Rate Limiting.
+const LOGIN_ATTEMPTS = new Map<string, { count: number; first: number; blockedUntil: number }>();
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 8;
+const LOGIN_BLOCK_MS = 15 * 60 * 1000;
+
+function getClientIp(c: Context<{ Bindings: Env }>): string {
+  return (
+    c.req.header("CF-Connecting-IP") ||
+    c.req.header("X-Forwarded-For")?.split(",")[0]?.trim() ||
+    c.req.header("X-Real-IP") ||
+    "unknown"
+  );
+}
+
+/** Devuelve `null` si está OK, o segundos restantes de bloqueo. */
+function checkLoginRate(ip: string): number | null {
+  const now = Date.now();
+  const rec = LOGIN_ATTEMPTS.get(ip);
+  if (!rec) return null;
+  if (rec.blockedUntil > now) return Math.ceil((rec.blockedUntil - now) / 1000);
+  if (now - rec.first > LOGIN_WINDOW_MS) LOGIN_ATTEMPTS.delete(ip);
+  return null;
+}
+
+function noteLoginFailure(ip: string): void {
+  const now = Date.now();
+  const rec = LOGIN_ATTEMPTS.get(ip);
+  if (!rec || now - rec.first > LOGIN_WINDOW_MS) {
+    LOGIN_ATTEMPTS.set(ip, { count: 1, first: now, blockedUntil: 0 });
+    return;
+  }
+  rec.count += 1;
+  if (rec.count >= LOGIN_MAX_ATTEMPTS) rec.blockedUntil = now + LOGIN_BLOCK_MS;
+}
+
+function noteLoginSuccess(ip: string): void {
+  LOGIN_ATTEMPTS.delete(ip);
+}
+
 function slugify(input: string): string {
   const s = input
     .normalize("NFD")
@@ -636,6 +677,15 @@ app.get("/api/instagram/feed", async (c) => {
 
 // --- Auth ---
 app.post("/api/auth/login", async (c) => {
+  const ip = getClientIp(c);
+  const blockedFor = checkLoginRate(ip);
+  if (blockedFor !== null) {
+    return c.json(
+      { error: `Demasiados intentos. Intente nuevamente en ${Math.ceil(blockedFor / 60)} minuto(s).` },
+      429,
+    );
+  }
+
   let body: { email?: string; password?: string };
   try {
     body = await c.req.json();
@@ -652,8 +702,10 @@ app.post("/api/auth/login", async (c) => {
     .bind(email)
     .first<{ id: number; email: string; password_record: string }>();
   if (!row || !(await verifyPassword(password, row.password_record))) {
+    noteLoginFailure(ip);
     return c.json({ error: "Invalid credentials" }, 401);
   }
+  noteLoginSuccess(ip);
 
   const token = await signToken(c.env, row.id, row.email);
   const url = new URL(c.req.url);
@@ -852,7 +904,7 @@ app.post("/api/admin/news", async (c) => {
         : null;
 
   const existing = await c.env.DB.prepare(`SELECT id FROM news WHERE slug = ?`).bind(slug).first();
-  if (existing) slug = `${slug}-${Date.now()}`;
+  if (existing) slug = `${slug}-${crypto.randomUUID().slice(0, 8)}`;
 
   const inserted = await c.env.DB.prepare(
     `INSERT INTO news (slug, title, excerpt, body, published, published_at, updated_at)
@@ -1137,12 +1189,20 @@ app.post("/api/admin/gazettes", async (c) => {
   if (!title) return c.json({ error: "title required" }, 400);
 
   const f = file as File;
+  const MAX_PDF_BYTES = 20 * 1024 * 1024;
+  if (f.size > MAX_PDF_BYTES) return c.json({ error: "El PDF excede el tamaño máximo (20 MB)." }, 413);
+
+  // Validar magic bytes: %PDF-
+  const head = new Uint8Array(await f.slice(0, 5).arrayBuffer());
+  const isPdf = head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46 && head[4] === 0x2d;
+  if (!isPdf) return c.json({ error: "El archivo no es un PDF válido." }, 400);
+
   const idPlaceholder = crypto.randomUUID();
   const safe = f.name.replace(/[^\w.\-]+/g, "_") || "document.pdf";
   const key = `gazettes/${idPlaceholder}-${safe}`;
 
   await c.env.BUCKET.put(key, f.stream(), {
-    httpMetadata: { contentType: f.type || "application/pdf" },
+    httpMetadata: { contentType: "application/pdf" },
   });
 
   const row = await c.env.DB.prepare(

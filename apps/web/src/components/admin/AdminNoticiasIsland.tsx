@@ -1,17 +1,21 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FileText, Pencil, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AdminFormSection } from "@/components/admin/AdminFormSection";
 import { MarkdownDemoButton } from "@/components/admin/MarkdownDemoButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { apiFetch } from "@/lib/api";
+import { safeFetchJson } from "@/lib/safe-fetch";
 import {
   clearMarkdownResult,
   getMarkdownResult,
@@ -53,7 +57,50 @@ export function AdminNoticiasIsland() {
   const [items, setItems] = useState<NewsItem[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loadErr, setLoadErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState<string>(() =>
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("q") ?? "" : "",
+  );
+  const [page, setPage] = useState<number>(() => {
+    if (typeof window === "undefined") return 1;
+    const p = Number(new URLSearchParams(window.location.search).get("page") ?? "1");
+    return Number.isFinite(p) && p > 0 ? p : 1;
+  });
+  const PER_PAGE = 10;
   const skipNextEditLoadFromList = useRef(false);
+  const { confirm, ConfirmDialog } = useConfirm();
+
+  // Sync URL state (q, page)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (query) params.set("q", query);
+    else params.delete("q");
+    if (page > 1) params.set("page", String(page));
+    else params.delete("page");
+    const q = params.toString();
+    const next = window.location.pathname + (q ? `?${q}` : "");
+    window.history.replaceState({}, "", next);
+  }, [query, page]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((n) =>
+      [n.title, n.slug, n.excerpt].some((v) => v?.toLowerCase().includes(q)),
+    );
+  }, [items, query]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const paged = useMemo(
+    () => filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE),
+    [filtered, safePage],
+  );
+
+  useEffect(() => {
+    if (page !== safePage) setPage(safePage);
+  }, [page, safePage]);
 
   const createForm = useForm<CreateForm>({
     resolver: zodResolver(createSchema),
@@ -67,12 +114,14 @@ export function AdminNoticiasIsland() {
 
   const load = useCallback(async () => {
     setLoadErr(null);
+    setLoading(true);
     try {
-      const res = await apiFetch("/api/admin/news");
-      const data = (await res.json()) as { items?: NewsItem[] };
+      const data = await safeFetchJson<{ items?: NewsItem[] }>("/api/admin/news", { retries: 1 });
       setItems(data.items || []);
-    } catch {
-      setLoadErr("Error al cargar noticias.");
+    } catch (e) {
+      setLoadErr(e instanceof Error ? e.message : "Error al cargar noticias.");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -165,7 +214,11 @@ export function AdminNoticiasIsland() {
   return (
     <div className="max-w-4xl space-y-10">
       <h1 className="text-2xl font-bold text-foreground">Noticias</h1>
-      {loadErr ? <p className="text-sm text-destructive">{loadErr}</p> : null}
+      <ConfirmDialog />
+      {loadErr ? <ErrorBanner message={loadErr} onRetry={() => void load()} /> : null}
+      {loading && !loadErr ? (
+        <p className="text-sm text-muted-foreground" aria-live="polite">Cargando noticias…</p>
+      ) : null}
 
       <Form {...createForm}>
         <form onSubmit={createForm.handleSubmit(onCreate)}>
@@ -253,9 +306,7 @@ export function AdminNoticiasIsland() {
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2 flex flex-row items-center gap-2 space-y-0">
                     <FormControl>
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 rounded border-input"
+                      <Checkbox
                         checked={field.value}
                         onChange={(e) => field.onChange(e.target.checked)}
                       />
@@ -277,9 +328,31 @@ export function AdminNoticiasIsland() {
       <Separator className="my-2" />
 
       <div>
-        <h2 className="text-lg font-semibold">Listado</h2>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 className="text-lg font-semibold">Listado</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-xs text-muted-foreground" htmlFor="news-admin-q">
+              Buscar
+            </label>
+            <Input
+              id="news-admin-q"
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Título, slug o resumen"
+              className="h-8 w-64"
+            />
+          </div>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
+          {filtered.length} {filtered.length === 1 ? "resultado" : "resultados"}
+          {query ? ` para «${query}»` : ""} · página {safePage} de {totalPages}
+        </p>
         <ul className="mt-4 space-y-4">
-          {items.map((n) => (
+          {paged.map((n) => (
             <li key={n.id}>
               <Card>
                 <CardContent className="p-4">
@@ -295,6 +368,8 @@ export function AdminNoticiasIsland() {
                         type="button"
                         variant="outline"
                         size="sm"
+                        aria-label={`Editar noticia: ${n.title}`}
+                        aria-expanded={editingId === n.id}
                         onClick={() => setEditingId((id) => (id === n.id ? null : n.id))}
                       >
                         <Pencil className="h-3.5 w-3.5" />
@@ -305,10 +380,21 @@ export function AdminNoticiasIsland() {
                         variant="ghost"
                         size="sm"
                         className="text-destructive"
+                        aria-label={`Eliminar noticia: ${n.title}`}
                         onClick={async () => {
-                          if (!confirm("¿Eliminar esta noticia?")) return;
-                          await apiFetch("/api/admin/news/" + n.id, { method: "DELETE" });
-                          void load();
+                          const ok = await confirm({
+                            title: "¿Eliminar esta noticia?",
+                            description: `«${n.title}» se eliminará de forma permanente.`,
+                            confirmLabel: "Eliminar",
+                            destructive: true,
+                          });
+                          if (!ok) return;
+                          try {
+                            await safeFetchJson(`/api/admin/news/${n.id}`, { method: "DELETE" });
+                            void load();
+                          } catch (e) {
+                            setLoadErr(e instanceof Error ? e.message : "No se pudo eliminar.");
+                          }
                         }}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -401,9 +487,7 @@ export function AdminNoticiasIsland() {
                           render={({ field }) => (
                             <FormItem className="flex flex-row items-center gap-2 space-y-0">
                               <FormControl>
-                                <input
-                                  type="checkbox"
-                                  className="h-4 w-4 rounded"
+                                <Checkbox
                                   checked={field.value}
                                   onChange={(e) => field.onChange(e.target.checked)}
                                 />
@@ -423,6 +507,48 @@ export function AdminNoticiasIsland() {
         </ul>
         {items.length === 0 && !loadErr ? (
           <p className="mt-4 text-sm text-muted-foreground">No hay noticias.</p>
+        ) : null}
+        {filtered.length === 0 && items.length > 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Ningún resultado para «{query}».{" "}
+            <button
+              type="button"
+              className="underline hover:text-foreground"
+              onClick={() => {
+                setQuery("");
+                setPage(1);
+              }}
+            >
+              Limpiar
+            </button>
+          </p>
+        ) : null}
+        {totalPages > 1 ? (
+          <nav className="mt-6 flex items-center justify-center gap-2" aria-label="Paginación">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={safePage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              aria-label="Página anterior"
+            >
+              ← Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {safePage} / {totalPages}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={safePage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              aria-label="Página siguiente"
+            >
+              Siguiente →
+            </Button>
+          </nav>
         ) : null}
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AdminFormSection } from "@/components/admin/AdminFormSection";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import {
   Select,
@@ -224,9 +225,7 @@ export function AdminAparienciaIsland() {
               render={({ field }) => (
                 <FormItem className="mt-4 flex flex-row items-center gap-2 space-y-0">
                   <FormControl>
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-input"
+                    <Checkbox
                       checked={field.value}
                       onChange={(e) => field.onChange(e.target.checked)}
                     />
@@ -345,9 +344,7 @@ export function AdminAparienciaIsland() {
               render={({ field }) => (
                 <FormItem className="mt-4 flex flex-row items-center gap-2 space-y-0">
                   <FormControl>
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-input"
+                    <Checkbox
                       checked={field.value}
                       onChange={(e) => field.onChange(e.target.checked)}
                     />

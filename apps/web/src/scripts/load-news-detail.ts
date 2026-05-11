@@ -1,4 +1,4 @@
-import { marked } from "marked";
+import { renderMarkdown } from "@/lib/markdown";
 import { apiUrl } from "../lib/api";
 
 const UNSPLASH = [
@@ -149,7 +149,7 @@ export async function initNewsDetail(rootId = "article-root"): Promise<void> {
     const body = document.createElement("div");
     body.className =
       "prose prose-slate mt-10 max-w-none dark:prose-invert prose-headings:font-semibold prose-headings:tracking-tight prose-p:text-muted-foreground prose-a:text-brand prose-strong:text-foreground prose-li:marker:text-brand dark:prose-a:text-brand-sky";
-    body.innerHTML = marked.parse(n.body || "", { async: false }) as string;
+    body.innerHTML = renderMarkdown(n.body);
     inner.appendChild(body);
 
     wrap.appendChild(inner);

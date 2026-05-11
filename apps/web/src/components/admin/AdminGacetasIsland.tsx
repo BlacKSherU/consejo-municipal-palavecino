@@ -1,12 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ExternalLink, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AdminFilePdfField } from "@/components/admin/AdminFilePdfField";
 import { AdminFormSection } from "@/components/admin/AdminFormSection";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
@@ -43,6 +45,46 @@ export function AdminGacetasIsland() {
   const [fileState, setFileState] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | undefined>();
   const [issueError, setIssueError] = useState<string | undefined>();
+  const [query, setQuery] = useState<string>(() =>
+    typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("q") ?? "" : "",
+  );
+  const [page, setPage] = useState<number>(() => {
+    if (typeof window === "undefined") return 1;
+    const p = Number(new URLSearchParams(window.location.search).get("page") ?? "1");
+    return Number.isFinite(p) && p > 0 ? p : 1;
+  });
+  const PER_PAGE = 10;
+  const { confirm, ConfirmDialog } = useConfirm();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (query) params.set("q", query);
+    else params.delete("q");
+    if (page > 1) params.set("page", String(page));
+    else params.delete("page");
+    const qs = params.toString();
+    window.history.replaceState({}, "", window.location.pathname + (qs ? `?${qs}` : ""));
+  }, [query, page]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((g) =>
+      [g.title, g.issue_number, g.published_at].some((v) => v?.toLowerCase().includes(q)),
+    );
+  }, [items, query]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const paged = useMemo(
+    () => filtered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE),
+    [filtered, safePage],
+  );
+
+  useEffect(() => {
+    if (page !== safePage) setPage(safePage);
+  }, [page, safePage]);
 
   const form = useForm<MetaValues>({
     resolver: zodResolver(metaSchema),
@@ -184,10 +226,33 @@ export function AdminGacetasIsland() {
       </div>
 
       <div className="max-w-4xl">
-        <h2 className="text-lg font-semibold">Publicadas</h2>
-        {listError ? <p className="mt-2 text-sm text-destructive">{listError}</p> : null}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <h2 className="text-lg font-semibold">Publicadas</h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-xs text-muted-foreground" htmlFor="gazettes-admin-q">
+              Buscar
+            </label>
+            <Input
+              id="gazettes-admin-q"
+              type="search"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Título, número o fecha"
+              className="h-8 w-64"
+            />
+          </div>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
+          {filtered.length} {filtered.length === 1 ? "resultado" : "resultados"}
+          {query ? ` para «${query}»` : ""} · página {safePage} de {totalPages}
+        </p>
+        {listError ? <ErrorBanner className="mt-2" message={listError} onRetry={() => void load()} /> : null}
+        <ConfirmDialog />
         <ul className="mt-4 space-y-3">
-          {items.map((g) => (
+          {paged.map((g) => (
             <li key={g.id}>
               <Card>
                 <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
@@ -214,8 +279,15 @@ export function AdminGacetasIsland() {
                       size="icon"
                       className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                       type="button"
+                      aria-label={`Eliminar gaceta: ${g.title}`}
                       onClick={async () => {
-                        if (!confirm("¿Eliminar esta gaceta?")) return;
+                        const ok = await confirm({
+                          title: "¿Eliminar esta gaceta?",
+                          description: `«${g.title}» y su PDF se eliminarán de forma permanente.`,
+                          confirmLabel: "Eliminar",
+                          destructive: true,
+                        });
+                        if (!ok) return;
                         await apiFetch("/api/admin/gazettes/" + g.id, { method: "DELETE" });
                         void load();
                       }}
@@ -230,6 +302,48 @@ export function AdminGacetasIsland() {
           ))}
         </ul>
         {items.length === 0 && !listError ? <p className="mt-4 text-sm text-muted-foreground">No hay gacetas aún.</p> : null}
+        {filtered.length === 0 && items.length > 0 ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Ningún resultado para «{query}».{" "}
+            <button
+              type="button"
+              className="underline hover:text-foreground"
+              onClick={() => {
+                setQuery("");
+                setPage(1);
+              }}
+            >
+              Limpiar
+            </button>
+          </p>
+        ) : null}
+        {totalPages > 1 ? (
+          <nav className="mt-6 flex items-center justify-center gap-2" aria-label="Paginación">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={safePage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              aria-label="Página anterior"
+            >
+              ← Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {safePage} / {totalPages}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={safePage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              aria-label="Página siguiente"
+            >
+              Siguiente →
+            </Button>
+          </nav>
+        ) : null}
       </div>
     </div>
   );

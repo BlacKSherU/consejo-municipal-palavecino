@@ -1,4 +1,4 @@
-import { marked } from "marked";
+import { renderMarkdown } from "@/lib/markdown";
 import { apiUrl } from "../lib/api";
 
 type Bundle = {
@@ -100,7 +100,7 @@ export async function initAboutPage(rootId = "about-page-root"): Promise<void> {
     const prose = document.createElement("div");
     prose.className =
       "prose prose-slate mt-6 max-w-none dark:prose-invert prose-headings:font-semibold prose-a:text-brand dark:prose-a:text-brand-sky prose-strong:text-slate-900 dark:prose-strong:text-white";
-    prose.innerHTML = marked.parse(data.body || "", { async: false }) as string;
+    prose.innerHTML = renderMarkdown(data.body);
     article.appendChild(prose);
     wrap.appendChild(article);
 
