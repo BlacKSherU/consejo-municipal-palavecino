@@ -46,26 +46,27 @@ export default {
           DEFAULT: "hsl(var(--card) / <alpha-value>)",
           foreground: "hsl(var(--card-foreground) / <alpha-value>)",
         },
+        // Paleta oficial CMBP: #A2298E magenta · #039680 teal · #019CD4 cian
         brand: {
-          DEFAULT: "#9B2D8A",
-          light: "#9c27b0",
-          dark: "#6a1b9a",
-          muted: "#ce93d8",
+          DEFAULT: "#A2298E",
+          light: "#C44DB0",
+          dark: "#7A1E6B",
+          muted: "#D98FCB",
         },
         "brand-teal": {
-          DEFAULT: "#008D96",
-          light: "#26a69a",
-          dark: "#00695c",
+          DEFAULT: "#039680",
+          light: "#06C0A4",
+          dark: "#02685A",
         },
         "brand-sky": {
-          DEFAULT: "#7ACCF2",
-          light: "#81d4fa",
-          dark: "#0288d1",
+          DEFAULT: "#019CD4",
+          light: "#34B6E8",
+          dark: "#017399",
         },
         "brand-cyan": {
-          DEFAULT: "#56E3E3",
-          light: "#80ffff",
-          dark: "#008b8b",
+          DEFAULT: "#019CD4",
+          light: "#5CC4EC",
+          dark: "#0277A3",
         },
       },
       fontFamily: {
@@ -76,11 +77,11 @@ export default {
       },
       backgroundImage: {
         "hero-light":
-          "linear-gradient(135deg, #f5e6f4 0%, #e0f4f5 45%, #e3f4fc 100%)",
+          "linear-gradient(135deg, #f7e4f3 0%, #e0f5f0 45%, #e2f4fc 100%)",
         "hero-dark":
-          "linear-gradient(135deg, #1a1025 0%, #0d1f1c 50%, #0a1628 100%)",
+          "linear-gradient(135deg, #1d0f1a 0%, #0a1f1b 50%, #08202c 100%)",
         "brand-gradient":
-          "linear-gradient(120deg, #9B2D8A 0%, #008D96 50%, #7ACCF2 100%)",
+          "linear-gradient(120deg, #A2298E 0%, #039680 50%, #019CD4 100%)",
       },
       keyframes: {
         float: {

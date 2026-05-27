@@ -15,7 +15,8 @@ const apiBase = getPublicApiUrlForBuild();
     <meta name="cmp-api-base" content={apiBase} />
     <ApiBaseEmbed />
     <title>Acceso administración — CMP Palavecino</title>
-    <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -32,7 +33,9 @@ const apiBase = getPublicApiUrlForBuild();
     <div class="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center px-4 py-12">
       <div class="rounded-2xl border border-slate-700/80 bg-slate-900/90 p-8 shadow-2xl backdrop-blur">
         <div class="mb-8 text-center">
-          <img src="/logo.svg" alt="" class="mx-auto h-14 w-14" width="56" height="56" />
+          <span class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg ring-1 ring-black/5">
+            <img src="/logo.png" alt="" class="h-14 w-14 object-contain" width="56" height="56" />
+          </span>
           <p class="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
             Consejo Municipal Palavecino
           </p>

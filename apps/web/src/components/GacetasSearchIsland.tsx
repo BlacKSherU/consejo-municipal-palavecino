@@ -411,7 +411,7 @@ export default function GacetasSearchIsland() {
                   <div
                     className={cn(
                       "p-1",
-                      "[&_.rdp-root]:[--rdp-accent-color:#9B2D8A] [&_.rdp-root]:[--rdp-accent-background-color:rgb(245_230_244)] [&_.rdp-root]:[--rdp-today-color:#9B2D8A]",
+                      "[&_.rdp-root]:[--rdp-accent-color:#A2298E] [&_.rdp-root]:[--rdp-accent-background-color:rgb(247_228_243)] [&_.rdp-root]:[--rdp-today-color:#A2298E]",
                     )}
                   >
                     <Calendar

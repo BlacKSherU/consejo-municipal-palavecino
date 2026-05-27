@@ -47,7 +47,7 @@
   @apply relative aspect-square w-full max-w-md animate-float rounded-3xl border border-white/50 bg-white/40 p-8 shadow-2xl shadow-brand/10 backdrop-blur-md dark:border-slate-700/50 dark:bg-slate-900/40 dark:shadow-brand/5;
 }
 .home-hero-logo {
-  @apply mx-auto h-48 w-48 opacity-90 dark:opacity-100;
+  @apply mx-auto h-48 w-48 rounded-full bg-white object-contain p-3 shadow-lg ring-1 ring-black/5;
 }
 .home-hero-card-text {
   @apply mt-6 text-center text-sm font-medium text-slate-600 dark:text-slate-300;
