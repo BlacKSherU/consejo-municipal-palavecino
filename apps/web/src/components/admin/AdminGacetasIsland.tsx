@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ExternalLink, Trash2 } from "lucide-react";
+import { ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -16,7 +16,14 @@ import { Separator } from "@/components/ui/separator";
 import { apiFetch, apiUrl } from "@/lib/api";
 import { issueNumberFromString, pdfFileSchema } from "@/lib/validators-ve";
 
-type Gazette = { id: number; title: string; issue_number: string; published_at: string };
+type Gazette = {
+  id: number;
+  title: string;
+  issue_number: string;
+  published_at: string;
+  file_name?: string;
+  file_size?: number;
+};
 
 function formatDate(iso: string | null | undefined): string {
   if (!iso?.trim()) return "—";
@@ -56,6 +63,82 @@ export function AdminGacetasIsland() {
   });
   const PER_PAGE = 10;
   const { confirm, ConfirmDialog } = useConfirm();
+
+  // Edición inline
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editIssue, setEditIssue] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editFileErr, setEditFileErr] = useState<string | undefined>();
+  const [editErr, setEditErr] = useState<string | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+
+  function openEdit(g: Gazette) {
+    setEditingId(g.id);
+    setEditTitle(g.title);
+    setEditIssue(g.issue_number || "");
+    setEditDate(g.published_at ? g.published_at.slice(0, 10) : "");
+    setEditFile(null);
+    setEditFileErr(undefined);
+    setEditErr(null);
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditErr(null);
+    setEditFile(null);
+    setEditFileErr(undefined);
+  }
+
+  async function saveEdit(id: number) {
+    setEditErr(null);
+    setEditFileErr(undefined);
+    if (!editTitle.trim()) {
+      setEditErr("El título no puede estar vacío.");
+      return;
+    }
+    if (editFile) {
+      const r = pdfFileSchema.safeParse(editFile);
+      if (!r.success) {
+        setEditFileErr(r.error.issues[0]?.message ?? "PDF no válido");
+        return;
+      }
+    }
+    setEditSaving(true);
+    try {
+      let res: Response;
+      if (editFile) {
+        const fd = new FormData();
+        fd.set("title", editTitle.trim());
+        fd.set("issue_number", editIssue.trim());
+        fd.set("published_at", editDate || "");
+        fd.set("file", editFile);
+        res = await apiFetch(`/api/admin/gazettes/${id}`, { method: "PUT", body: fd });
+      } else {
+        res = await apiFetch(`/api/admin/gazettes/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: editTitle.trim(),
+            issue_number: editIssue.trim(),
+            published_at: editDate || "",
+          }),
+        });
+      }
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        setEditErr(j.error || `Error ${res.status} al guardar.`);
+        return;
+      }
+      cancelEdit();
+      void load();
+    } catch {
+      setEditErr("No se pudo conectar con el servidor.");
+    } finally {
+      setEditSaving(false);
+    }
+  }
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -264,47 +347,116 @@ export function AdminGacetasIsland() {
           {paged.map((g) => (
             <li key={g.id}>
               <Card>
-                <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
-                  <div>
-                    <p className="font-medium text-foreground">{g.title || "—"}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {g.issue_number || "—"} · {formatDate(g.published_at)}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <a
-                        href={apiUrl("/api/gazettes/" + g.id + "/download")}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1"
+                <CardContent className="p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground">{g.title || "—"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {g.issue_number || "—"} · {formatDate(g.published_at)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <a
+                          href={apiUrl("/api/gazettes/" + g.id + "/download")}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Ver PDF
+                        </a>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        aria-label={`Editar gaceta: ${g.title}`}
+                        aria-expanded={editingId === g.id}
+                        onClick={() => (editingId === g.id ? cancelEdit() : openEdit(g))}
                       >
-                        <ExternalLink className="h-4 w-4" />
-                        Ver PDF
-                      </a>
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                      type="button"
-                      aria-label={`Eliminar gaceta: ${g.title}`}
-                      onClick={async () => {
-                        const ok = await confirm({
-                          title: "¿Eliminar esta gaceta?",
-                          description: `«${g.title}» y su PDF se eliminarán de forma permanente.`,
-                          confirmLabel: "Eliminar",
-                          destructive: true,
-                        });
-                        if (!ok) return;
-                        await apiFetch("/api/admin/gazettes/" + g.id, { method: "DELETE" });
-                        void load();
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="sr-only">Eliminar</span>
-                    </Button>
+                        <Pencil className="h-3.5 w-3.5" />
+                        Editar
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                        type="button"
+                        aria-label={`Eliminar gaceta: ${g.title}`}
+                        onClick={async () => {
+                          const ok = await confirm({
+                            title: "¿Eliminar esta gaceta?",
+                            description: `«${g.title}» y su PDF se eliminarán de forma permanente.`,
+                            confirmLabel: "Eliminar",
+                            destructive: true,
+                          });
+                          if (!ok) return;
+                          await apiFetch("/api/admin/gazettes/" + g.id, { method: "DELETE" });
+                          void load();
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="sr-only">Eliminar</span>
+                      </Button>
+                    </div>
                   </div>
+
+                  {editingId === g.id ? (
+                    <div className="mt-4 space-y-3 border-t border-border pt-4">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <label className="sm:col-span-2 block space-y-1.5">
+                          <span className="text-sm font-medium text-foreground">Título *</span>
+                          <Input
+                            value={editTitle}
+                            onChange={(e) => setEditTitle(e.target.value)}
+                            placeholder="Título oficial de la gaceta"
+                          />
+                        </label>
+                        <label className="block space-y-1.5">
+                          <span className="text-sm font-medium text-foreground">Número de gaceta</span>
+                          <Input
+                            value={editIssue}
+                            onChange={(e) => setEditIssue(e.target.value)}
+                            placeholder="Ej: 10.962"
+                          />
+                        </label>
+                        <label className="block space-y-1.5">
+                          <span className="text-sm font-medium text-foreground">Fecha de publicación</span>
+                          <Input
+                            type="date"
+                            value={editDate}
+                            onChange={(e) => setEditDate(e.target.value)}
+                          />
+                        </label>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="text-sm font-medium text-foreground">
+                          Reemplazar PDF (opcional)
+                        </span>
+                        <AdminFilePdfField
+                          label=""
+                          value={editFile}
+                          onChange={(f) => {
+                            setEditFile(f);
+                            setEditFileErr(undefined);
+                          }}
+                          error={editFileErr}
+                          existingFileName={editFile ? undefined : g.file_name}
+                          existingFileSize={editFile ? undefined : g.file_size}
+                        />
+                      </div>
+                      {editErr ? <ErrorBanner message={editErr} /> : null}
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" onClick={() => void saveEdit(g.id)} disabled={editSaving}>
+                          {editSaving ? "Guardando…" : "Guardar cambios"}
+                        </Button>
+                        <Button type="button" variant="outline" onClick={cancelEdit} disabled={editSaving}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
                 </CardContent>
               </Card>
             </li>

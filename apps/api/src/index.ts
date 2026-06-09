@@ -1215,6 +1215,95 @@ app.post("/api/admin/gazettes", async (c) => {
   return c.json({ ok: true, id: row?.id });
 });
 
+app.put("/api/admin/gazettes/:id", async (c) => {
+  const id = Number(c.req.param("id"));
+  if (!Number.isFinite(id) || id <= 0) return c.json({ error: "Invalid id" }, 400);
+
+  const existing = await c.env.DB.prepare(
+    `SELECT id, r2_key FROM gazettes WHERE id = ?`
+  )
+    .bind(id)
+    .first<{ id: number; r2_key: string }>();
+  if (!existing) return c.json({ error: "Not found" }, 404);
+
+  const ct = (c.req.header("content-type") || "").toLowerCase();
+  let title: string | undefined;
+  let issueNumber: string | undefined;
+  let publishedAt: string | undefined;
+  let file: File | undefined;
+
+  if (ct.includes("multipart/form-data")) {
+    const form = await c.req.parseBody();
+    if (typeof form.title === "string") title = form.title.trim();
+    if (typeof form.issue_number === "string") issueNumber = form.issue_number.trim();
+    if (typeof form.published_at === "string") publishedAt = form.published_at.trim();
+    const f = form.file;
+    if (f && typeof f !== "string") file = f as File;
+  } else {
+    const body = (await c.req.json().catch(() => ({}))) as {
+      title?: string;
+      issue_number?: string;
+      published_at?: string;
+    };
+    if (typeof body.title === "string") title = body.title.trim();
+    if (typeof body.issue_number === "string") issueNumber = body.issue_number.trim();
+    if (typeof body.published_at === "string") publishedAt = body.published_at.trim();
+  }
+
+  if (title !== undefined && title.length === 0) return c.json({ error: "title cannot be empty" }, 400);
+
+  let newR2Key: string | null = null;
+  let newFileName: string | null = null;
+  let newFileSize: number | null = null;
+
+  if (file) {
+    const MAX_PDF_BYTES = 20 * 1024 * 1024;
+    if (file.size > MAX_PDF_BYTES) return c.json({ error: "El PDF excede el tamaño máximo (20 MB)." }, 413);
+    const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+    const isPdf =
+      head[0] === 0x25 && head[1] === 0x50 && head[2] === 0x44 && head[3] === 0x46 && head[4] === 0x2d;
+    if (!isPdf) return c.json({ error: "El archivo no es un PDF válido." }, 400);
+
+    const safe = file.name.replace(/[^\w.\-]+/g, "_") || "document.pdf";
+    newR2Key = `gazettes/${crypto.randomUUID()}-${safe}`;
+    newFileName = file.name;
+    newFileSize = file.size;
+    await c.env.BUCKET.put(newR2Key, file.stream(), {
+      httpMetadata: { contentType: "application/pdf" },
+    });
+  }
+
+  const sets: string[] = [];
+  const binds: unknown[] = [];
+  if (title !== undefined) {
+    sets.push("title = ?");
+    binds.push(title);
+  }
+  if (issueNumber !== undefined) {
+    sets.push("issue_number = ?");
+    binds.push(issueNumber);
+  }
+  if (publishedAt !== undefined) {
+    sets.push("published_at = ?");
+    binds.push(publishedAt);
+  }
+  if (newR2Key) {
+    sets.push("r2_key = ?", "file_name = ?", "file_size = ?", "mime = ?");
+    binds.push(newR2Key, newFileName, newFileSize, "application/pdf");
+  }
+
+  if (sets.length === 0) return c.json({ error: "Sin cambios" }, 400);
+
+  binds.push(id);
+  await c.env.DB.prepare(`UPDATE gazettes SET ${sets.join(", ")} WHERE id = ?`).bind(...binds).run();
+
+  if (newR2Key) {
+    await c.env.BUCKET.delete(existing.r2_key).catch(() => undefined);
+  }
+
+  return c.json({ ok: true });
+});
+
 app.delete("/api/admin/gazettes/:id", async (c) => {
   const id = Number(c.req.param("id"));
   const row = await c.env.DB.prepare(`SELECT r2_key FROM gazettes WHERE id = ?`).bind(id).first<{ r2_key: string }>();
