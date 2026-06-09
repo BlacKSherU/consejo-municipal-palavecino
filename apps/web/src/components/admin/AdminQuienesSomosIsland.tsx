@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AdminFormSection } from "@/components/admin/AdminFormSection";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MarkdownDemoButton } from "@/components/admin/MarkdownDemoButton";
 import { Button } from "@/components/ui/button";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -92,25 +94,25 @@ export function AdminQuienesSomosIsland() {
   }
 
   return (
-    <div className="max-w-3xl space-y-0">
-      <h1 className="text-2xl font-bold text-foreground">Quiénes somos</h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        Texto bajo el título, misión, visión (texto plano) y cuerpo largo en Markdown. Use el Markdown del cuerpo
-        (descripción) para incluir imágenes si lo necesita.{" "}
-        <a
-          className="text-primary hover:underline"
-          href="/quienes-somos"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Página pública
-        </a>
-        .
-      </p>
-      {loadErr ? <p className="mt-2 text-sm text-destructive">{loadErr}</p> : null}
+    <div className="max-w-5xl space-y-8">
+      <AdminPageHeader
+        title="Quiénes somos"
+        description="Texto bajo el título, misión, visión y cuerpo largo en Markdown. Use el Markdown del cuerpo para incluir imágenes si lo necesita."
+        actions={
+          <a
+            className="text-sm font-medium text-primary hover:underline"
+            href="/quienes-somos"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Página pública ↗
+          </a>
+        }
+      />
+      {loadErr ? <ErrorBanner message={loadErr} /> : null}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-10">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
           <AdminFormSection
             title="Texto bajo el título"
             description="Aparece arriba en la página: línea en mayúsculas y subtítulo."

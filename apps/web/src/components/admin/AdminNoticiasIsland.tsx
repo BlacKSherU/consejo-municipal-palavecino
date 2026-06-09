@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AdminFormSection } from "@/components/admin/AdminFormSection";
+import { AdminListHeader, AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { MarkdownDemoButton } from "@/components/admin/MarkdownDemoButton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -212,8 +213,21 @@ export function AdminNoticiasIsland() {
   }
 
   return (
-    <div className="max-w-4xl space-y-10">
-      <h1 className="text-2xl font-bold text-foreground">Noticias</h1>
+    <div className="max-w-5xl space-y-8">
+      <AdminPageHeader
+        title="Noticias"
+        description="Cree, edite y publique noticias en Markdown."
+        actions={
+          <a
+            className="text-sm font-medium text-primary hover:underline"
+            href="/noticias"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Página pública ↗
+          </a>
+        }
+      />
       <ConfirmDialog />
       {loadErr ? <ErrorBanner message={loadErr} onRetry={() => void load()} /> : null}
       {loading && !loadErr ? (
@@ -325,33 +339,30 @@ export function AdminNoticiasIsland() {
         </form>
       </Form>
 
-      <Separator className="my-2" />
+      <Separator />
 
-      <div>
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="text-lg font-semibold">Listado</h2>
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="text-xs text-muted-foreground" htmlFor="news-admin-q">
-              Buscar
-            </label>
-            <Input
-              id="news-admin-q"
-              type="search"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Título, slug o resumen"
-              className="h-8 w-64"
-            />
-          </div>
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
-          {filtered.length} {filtered.length === 1 ? "resultado" : "resultados"}
-          {query ? ` para «${query}»` : ""} · página {safePage} de {totalPages}
-        </p>
-        <ul className="mt-4 space-y-4">
+      <div className="space-y-4">
+        <AdminListHeader
+          title="Listado"
+          count={filtered.length}
+          description={`Página ${safePage} de ${totalPages}${query ? ` · filtrando «${query}»` : ""}`}
+        >
+          <label className="sr-only" htmlFor="news-admin-q">
+            Buscar
+          </label>
+          <Input
+            id="news-admin-q"
+            type="search"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Buscar título, slug o resumen…"
+            className="h-9 w-64"
+          />
+        </AdminListHeader>
+        <ul className="space-y-4">
           {paged.map((n) => (
             <li key={n.id}>
               <Card>

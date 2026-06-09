@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AdminFormSection } from "@/components/admin/AdminFormSection";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -97,19 +99,25 @@ export function AdminInicioIsland() {
   }
 
   return (
-    <div className="max-w-3xl space-y-0">
-      <h1 className="text-2xl font-bold text-foreground">Página de inicio</h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        Textos del héroe, bloque de misión e introducción a Instagram.{" "}
-        <a className="text-primary hover:underline" href="/" target="_blank" rel="noopener noreferrer">
-          Ver sitio público
-        </a>
-        .
-      </p>
-      {loadErr ? <p className="mt-2 text-sm text-destructive">{loadErr}</p> : null}
+    <div className="max-w-5xl space-y-8">
+      <AdminPageHeader
+        title="Página de inicio"
+        description="Textos del héroe, bloque de misión e introducción a Instagram."
+        actions={
+          <a
+            className="text-sm font-medium text-primary hover:underline"
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Ver sitio público ↗
+          </a>
+        }
+      />
+      {loadErr ? <ErrorBanner message={loadErr} /> : null}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-10">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
           <AdminFormSection
             title="Encabezado (héroe)"
             description="Línea con insignia, título en dos partes, párrafo y botones. Los enlaces deben ser rutas del propio sitio (empiezan con /)."

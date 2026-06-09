@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AdminFormSection } from "@/components/admin/AdminFormSection";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ErrorBanner } from "@/components/ui/error-banner";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import {
   Select,
@@ -109,16 +111,15 @@ export function AdminAparienciaIsland() {
   }
 
   return (
-    <div className="max-w-4xl space-y-0">
-      <h1 className="text-2xl font-bold text-foreground">Apariencia del sitio</h1>
-      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-        Ajuste el aspecto de las imágenes en noticias y en la galería de consejales. Los cambios se aplican al instante en
-        el sitio público.
-      </p>
-      {loadError ? <p className="mt-2 text-sm text-destructive">{loadError}</p> : null}
+    <div className="max-w-5xl space-y-8">
+      <AdminPageHeader
+        title="Apariencia del sitio"
+        description="Ajuste el aspecto de las imágenes en noticias y en la galería de consejales. Los cambios se aplican al instante en el sitio público."
+      />
+      {loadError ? <ErrorBanner message={loadError} /> : null}
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-10">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-10">
           <AdminFormSection
             title="Noticias (tarjetas y modal)"
             description="Altura de imágenes y bordes en la lista pública y en el modal al abrir la noticia."

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AdminFileImageField } from "@/components/admin/AdminFileImageField";
 import { AdminFormSection } from "@/components/admin/AdminFormSection";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { OrderFieldLabelWithHint } from "@/components/admin/OrderFieldHint";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -250,8 +251,21 @@ export function AdminConsejoIsland() {
   }
 
   return (
-    <div className="max-w-5xl space-y-10">
-      <h1 className="text-2xl font-bold text-foreground">Puestos y consejales</h1>
+    <div className="max-w-5xl space-y-8">
+      <AdminPageHeader
+        title="Puestos y consejales"
+        description="Administre los puestos del consejo y los datos públicos de cada consejal."
+        actions={
+          <a
+            className="text-sm font-medium text-primary hover:underline"
+            href="/consejo"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Página pública ↗
+          </a>
+        }
+      />
       <ConfirmDialog />
       {loadErr ? <ErrorBanner message={loadErr} onRetry={() => void load()} /> : null}
 

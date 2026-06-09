@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { apiFetch } from "@/lib/api";
@@ -24,12 +25,17 @@ export function AdminInstagramIsland() {
   }
 
   return (
-    <div className="max-w-3xl space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">Instagram</h1>
-      <p className="text-sm text-muted-foreground">
-        Actualiza la caché desde la API Graph (Meta). Configure <code className="rounded bg-muted px-1 text-xs">META_ACCESS_TOKEN</code> e
-        <code className="rounded bg-muted px-1 text-xs">INSTAGRAM_USER_ID</code> en el Worker.
-      </p>
+    <div className="max-w-5xl space-y-8">
+      <AdminPageHeader
+        title="Instagram"
+        description={
+          <>
+            Actualiza la caché desde la API Graph (Meta). Configure{" "}
+            <code className="rounded bg-muted px-1 text-xs">META_ACCESS_TOKEN</code> e{" "}
+            <code className="rounded bg-muted px-1 text-xs">INSTAGRAM_USER_ID</code> en el Worker.
+          </>
+        }
+      />
 
       <Card>
         <CardHeader>

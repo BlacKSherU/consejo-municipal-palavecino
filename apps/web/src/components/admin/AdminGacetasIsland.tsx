@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { AdminFilePdfField } from "@/components/admin/AdminFilePdfField";
 import { AdminFormSection } from "@/components/admin/AdminFormSection";
+import { AdminListHeader, AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useConfirm } from "@/components/ui/confirm-dialog";
@@ -140,12 +141,23 @@ export function AdminGacetasIsland() {
   }
 
   return (
-    <div className="space-y-10">
-      <div className="max-w-4xl">
-        <h1 className="text-2xl font-bold text-foreground">Gacetas oficiales</h1>
-      </div>
+    <div className="max-w-5xl space-y-8">
+      <AdminPageHeader
+        title="Gacetas oficiales"
+        description="Publique las gacetas en PDF. Los archivos se sirven desde R2 con descarga directa."
+        actions={
+          <a
+            className="text-sm font-medium text-primary hover:underline"
+            href="/gacetas"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Página pública ↗
+          </a>
+        }
+      />
 
-      <div className="max-w-4xl space-y-6">
+      <div className="space-y-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
             <AdminFormSection
@@ -225,33 +237,30 @@ export function AdminGacetasIsland() {
         <Separator className="my-2" />
       </div>
 
-      <div className="max-w-4xl">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h2 className="text-lg font-semibold">Publicadas</h2>
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="text-xs text-muted-foreground" htmlFor="gazettes-admin-q">
-              Buscar
-            </label>
-            <Input
-              id="gazettes-admin-q"
-              type="search"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Título, número o fecha"
-              className="h-8 w-64"
-            />
-          </div>
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground" aria-live="polite">
-          {filtered.length} {filtered.length === 1 ? "resultado" : "resultados"}
-          {query ? ` para «${query}»` : ""} · página {safePage} de {totalPages}
-        </p>
-        {listError ? <ErrorBanner className="mt-2" message={listError} onRetry={() => void load()} /> : null}
+      <div className="space-y-4">
+        <AdminListHeader
+          title="Publicadas"
+          count={filtered.length}
+          description={`Página ${safePage} de ${totalPages}${query ? ` · filtrando «${query}»` : ""}`}
+        >
+          <label className="sr-only" htmlFor="gazettes-admin-q">
+            Buscar
+          </label>
+          <Input
+            id="gazettes-admin-q"
+            type="search"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            placeholder="Buscar título, número o fecha…"
+            className="h-9 w-64"
+          />
+        </AdminListHeader>
+        {listError ? <ErrorBanner message={listError} onRetry={() => void load()} /> : null}
         <ConfirmDialog />
-        <ul className="mt-4 space-y-3">
+        <ul className="space-y-3">
           {paged.map((g) => (
             <li key={g.id}>
               <Card>
