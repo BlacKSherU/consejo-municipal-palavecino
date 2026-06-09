@@ -1,1 +1,1 @@
-UPDATE admin_users SET password_record = 'pbkdf2:100000:dVLLyjQaUqF1Mpr6IXleFQ==:Kx+rp30lkySsr05ztQomexEJhTdoSDD0fE3M1mI6eMU=' WHERE email = 'admin@demo.cmp.test';
+UPDATE admin_users SET password_record = 'pbkdf2:100000:hG3vv4LyTOftWGbE7FNHMA==:/DdAt7pF/W8AP9uaqpVlkTUTl4GxSgxsd0haBEARqTg=' WHERE email = 'admin@demo.cmp.test';

@@ -8,20 +8,17 @@ crons = ["0 */6 * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "cmp-db"
-database_id = "820094b1-8cc1-4a23-a1cc-26eb3f928910"
+database_id = "f07c1546-eada-4845-87d1-233afe5d356c"
 
 [[r2_buckets]]
 binding = "BUCKET"
 bucket_name = "cmp-assets"
 
-# Variables locales: usa apps/api/.dev.vars (ver .dev.vars.example) o [vars] abajo.
-# En producción: Dashboard del Worker → Settings → Variables y Secrets.
+# Variables locales: usá apps/api/.dev.vars (no subir a git) para JWT_SECRET en dev.
+# En producción: JWT_SECRET se setea con `npx wrangler secret put JWT_SECRET`.
 [vars]
-JWT_SECRET = "local-dev-jwt-secret-change-in-production"
-
 # CORS_ORIGIN: origen del FRONT (Cloudflare Pages), NO la URL del Worker. Sin esto, el login desde
 # *.pages.dev falla con "NetworkError / CORS". Varios orígenes: coma sin espacios.
-# Ejemplo producción + local:
 CORS_ORIGIN = "https://consejo-municipal-palavecino.pages.dev,http://localhost:4321"
 # En producción configúrala en el Dashboard del Worker (recomendado) o en .dev.vars local.
 

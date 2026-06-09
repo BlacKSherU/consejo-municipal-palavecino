@@ -1,5 +1,5 @@
 /** Worker en producción si no hay PUBLIC_API_URL en el build (p. ej. variable mal configurada en Pages). */
-export const DEFAULT_PUBLIC_API_BASE = "https://cmp-api.tramitesgarciamiguel.workers.dev";
+export const DEFAULT_PUBLIC_API_BASE = "https://cmp-api.informatica-cmbp.workers.dev";
 
 /**
  * Base del API embebida en el HTML en tiempo de build.
