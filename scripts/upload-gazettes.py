@@ -51,7 +51,9 @@ def pdf_text(path: Path, max_pages: int = 30) -> str:
 
 
 GAZETTE_RE = re.compile(
-    r"GACETA\s+MUNICIPAL\s+(?:ORDINARIA|EXTRAORDINARIA)\s*N[ºo°]?\s*([\d.]+)",
+    # SOLO match cuando el nº va seguido de "contentiva de" (la frase oficial de publicación).
+    # Sin esto, terminamos capturando referencias a gacetas de instalación/juramentación.
+    r"GACETA\s+MUNICIPAL\s+(?:ORDINARIA|EXTRAORDINARIA)\s*N[ºo°]?\s*([\d.]+)\s*,?\s*contentiva\s+de",
     re.IGNORECASE,
 )
 TITLE_RE = re.compile(
@@ -62,19 +64,35 @@ TITLE_RE = re.compile(
 # Cabecera tipo "REFORMA … PALAVECINO" o "ORDENANZA … PALAVECINO" antes de un quiebre claro de bloque
 HEADER_TITLE_RE = re.compile(
     r"((?:REFORMA|ORDENANZA)[^.]{15,400}?(?:PALAVECINO|LARA))"
-    r"\s*(?:\.|EXPOSICI[OÓ]N\s+DE\s+MOTIVOS|Art[ií]culo\s*\d)",
+    r"\s*(?:\.|EXPOSICI[OÓ]N\s+DE\s+MOTIVOS|Art[ií]culo\s*\d|DEFINICIONES|CAP[IÍ]TULO\s+(?:I|1))",
     re.IGNORECASE,
 )
-# Texto que indica que NO es un título sino contenido del cuerpo
+# Un candidato es título solo si la mayoría de sus letras son MAYÚSCULAS originalmente
+# (firma de heading vs fragmento de cuerpo en mayúsculas+minúsculas mezcladas).
+def is_mostly_uppercase(s: str) -> bool:
+    letters = [c for c in s if c.isalpha()]
+    if not letters:
+        return False
+    upper = sum(1 for c in letters if c.isupper())
+    return (upper / len(letters)) >= 0.7
+# Texto que indica que NO es un título sino contenido del cuerpo / cláusula final
 NOT_A_TITLE_RE = re.compile(
-    r"\b(?:se\s+entiende|el\s+cual|en\s+uso\s+de|considerando|por\s+cuanto|n[uú]mero\s+\d)\b",
+    r"\b(?:se\s+entiende|el\s+cual|en\s+uso\s+de|considerando|por\s+cuanto|n[uú]mero\s+\d|"
+    r"comenzar[aá]\s+a\s+regir|entrar[aá]\s+en\s+vigencia|a\s+partir\s+de\s+su\s+publicaci|"
+    r"ser[aá]n?\s+de\s+aplicaci|propone\s+la\s+siguiente)",
     re.IGNORECASE,
 )
 DATE_RE = re.compile(r"sancionad[ao]\s+el\s+(\d{2}/\d{2}/\d{4})", re.IGNORECASE)
 FECHA_INLINE_RE = re.compile(r"FECHA:\s*(\d{2}/\d{2}/\d{4})", re.IGNORECASE)
 # Fecha escrita en palabras: "a los dieciocho (18) días del mes de diciembre del dos mil veinticinco (2.025)"
+# Acepta tanto "dos mil X" como "mil X" (algunos PDFs escriben "del mil veinticinco")
 TEXTUAL_DATE_RE = re.compile(
-    r"\(\s*(\d{1,2})\s*\)\s+d[ií]as\s+del\s+mes\s+de\s+(\w+)\s+del\s+dos\s+mil[^(]{0,40}\(\s*2\.?\s*(\d{3})\s*\)",
+    r"\(\s*(\d{1,2})\s*\)\s+d[ií]as\s+del\s+mes\s+de\s+(\w+)\s+del\s+(?:dos\s+)?mil[^(]{0,40}\(\s*2\.?\s*(\d{3})\s*\)",
+    re.IGNORECASE,
+)
+# Variante 2: "días del mes de diciembre de 2025" (sin "dos mil X")
+TEXTUAL_DATE_SHORT_RE = re.compile(
+    r"\(\s*(\d{1,2})\s*\)\s+d[ií]as\s+del\s+mes\s+de\s+(\w+)\s+de\s+(?:l\s+a[nñ]o\s+)?2\.?\s*(\d{3})",
     re.IGNORECASE,
 )
 # Plan B: pura fecha textual ej. "diciembre del 2025" como último recurso
@@ -102,30 +120,36 @@ def parse_dmy(s: str) -> str:
     return f"{y}-{m.zfill(2)}-{d.zfill(2)}"
 
 
-def parse_textual_date(text: str) -> str | None:
-    """Extrae fecha de sanción escrita en palabras (formato venezolano oficial).
+def _date_from_match(m: re.Match) -> str | None:
+    d, month_name, y_suffix = m.group(1), m.group(2).lower(), m.group(3)
+    mm = MESES.get(month_name)
+    return f"2{y_suffix}-{mm}-{d.zfill(2)}" if mm else None
 
-    Solo usamos el patrón formal "(NN) días del mes de MES del dos mil PALABRA"
-    cuando aparece después de la palabra 'Sancionad' (la frase oficial de sanción).
-    Otros patrones más laxos generan falsos positivos al capturar referencias a
-    gacetas antiguas.
+
+def parse_textual_date(text: str) -> str | None:
+    """Extrae fecha de sanción o promulgación escrita en palabras (formato venezolano).
+
+    Prioridad:
+        1. Tras "Sancionad" (acto de sanción del concejo)
+        2. Tras "Promulgada" (acto de promulgación del alcalde, suele estar al final)
+        3. Tras "REUNI[OÓ]N ORDINARIA" o "FECHA:" (informes de acta interna)
+        4. Si solo hay una ocurrencia textual no ambigua, usarla
     """
-    # Buscar todas las ocurrencias y preferir la primera que esté tras "Sancionad"
-    for m in TEXTUAL_DATE_RE.finditer(text):
-        ctx = text[max(0, m.start() - 200) : m.start()].lower()
-        if "sancionad" in ctx:
-            d, month_name, y_suffix = m.group(1), m.group(2).lower(), m.group(3)
-            mm = MESES.get(month_name)
-            if mm:
-                return f"2{y_suffix}-{mm}-{d.zfill(2)}"
-    # Sin contexto "Sancionad", solo aceptar si hay UNA sola ocurrencia (poco ambiguo)
-    matches = list(TEXTUAL_DATE_RE.finditer(text))
-    if len(matches) == 1:
-        m = matches[0]
-        d, month_name, y_suffix = m.group(1), m.group(2).lower(), m.group(3)
-        mm = MESES.get(month_name)
-        if mm:
-            return f"2{y_suffix}-{mm}-{d.zfill(2)}"
+    all_re = list(TEXTUAL_DATE_RE.finditer(text)) + list(TEXTUAL_DATE_SHORT_RE.finditer(text))
+    if not all_re:
+        return None
+
+    for keyword in ("sancionad", "promulgada", "reuni[oó]n", "fecha[:\\s]"):
+        kw_re = re.compile(keyword, re.IGNORECASE)
+        for m in all_re:
+            ctx = text[max(0, m.start() - 250) : m.start()]
+            if kw_re.search(ctx):
+                d = _date_from_match(m)
+                if d:
+                    return d
+
+    if len(all_re) == 1:
+        return _date_from_match(all_re[0])
     return None
 
 
@@ -184,11 +208,13 @@ def extract_metadata(pdf: Path) -> dict:
             meta["source"] = "pdf"
 
     # Si no se encontró un título válido, buscar la primera cabecera tipo "ORDENANZA/REFORMA … PALAVECINO"
-    # que no parezca texto del cuerpo del documento
+    # que no parezca texto del cuerpo del documento y sea claramente un heading (mayúsculas)
     if meta["source"] == "filename":
         for h in HEADER_TITLE_RE.finditer(text):
             candidate_raw = h.group(1).strip()
             if NOT_A_TITLE_RE.search(candidate_raw):
+                continue
+            if not is_mostly_uppercase(candidate_raw):
                 continue
             meta["title"] = clean_title(candidate_raw)
             meta["source"] = "pdf-header"
