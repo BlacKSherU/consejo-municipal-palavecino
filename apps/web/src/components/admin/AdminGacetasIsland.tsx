@@ -347,59 +347,65 @@ export function AdminGacetasIsland() {
           {paged.map((g) => (
             <li key={g.id}>
               <Card>
-                <CardContent className="p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-medium text-foreground">{g.title || "—"}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {g.issue_number || "—"} · {formatDate(g.published_at)}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <a
-                          href={apiUrl("/api/gazettes/" + g.id + "/download")}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          Ver PDF
-                        </a>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        type="button"
-                        aria-label={`Editar gaceta: ${g.title}`}
-                        aria-expanded={editingId === g.id}
-                        onClick={() => (editingId === g.id ? cancelEdit() : openEdit(g))}
+                <CardContent className="space-y-3 p-4">
+                  <div className="min-w-0">
+                    <p className="font-medium leading-snug text-foreground">{g.title || "—"}</p>
+                    <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="font-medium text-foreground/70">Nº</span>
+                        {g.issue_number || "—"}
+                      </span>
+                      <span aria-hidden>·</span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="font-medium text-foreground/70">Fecha</span>
+                        {formatDate(g.published_at)}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+                    <Button variant="outline" size="sm" asChild>
+                      <a
+                        href={apiUrl("/api/gazettes/" + g.id + "/download")}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1"
                       >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Editar
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-                        type="button"
-                        aria-label={`Eliminar gaceta: ${g.title}`}
-                        onClick={async () => {
-                          const ok = await confirm({
-                            title: "¿Eliminar esta gaceta?",
-                            description: `«${g.title}» y su PDF se eliminarán de forma permanente.`,
-                            confirmLabel: "Eliminar",
-                            destructive: true,
-                          });
-                          if (!ok) return;
-                          await apiFetch("/api/admin/gazettes/" + g.id, { method: "DELETE" });
-                          void load();
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">Eliminar</span>
-                      </Button>
-                    </div>
+                        <ExternalLink className="h-4 w-4" />
+                        Ver PDF
+                      </a>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      aria-label={`Editar gaceta: ${g.title}`}
+                      aria-expanded={editingId === g.id}
+                      onClick={() => (editingId === g.id ? cancelEdit() : openEdit(g))}
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ms-auto text-destructive hover:bg-destructive/10 hover:text-destructive"
+                      type="button"
+                      aria-label={`Eliminar gaceta: ${g.title}`}
+                      onClick={async () => {
+                        const ok = await confirm({
+                          title: "¿Eliminar esta gaceta?",
+                          description: `«${g.title}» y su PDF se eliminarán de forma permanente.`,
+                          confirmLabel: "Eliminar",
+                          destructive: true,
+                        });
+                        if (!ok) return;
+                        await apiFetch("/api/admin/gazettes/" + g.id, { method: "DELETE" });
+                        void load();
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Eliminar
+                    </Button>
                   </div>
 
                   {editingId === g.id ? (
