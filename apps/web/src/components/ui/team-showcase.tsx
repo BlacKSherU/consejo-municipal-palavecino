@@ -62,7 +62,8 @@ export default function TeamShowcase({ members = [], publicUi }: TeamShowcasePro
   return (
     <>
       <div className="mx-auto flex w-full max-w-5xl flex-col items-start gap-8 px-4 py-8 font-sans md:flex-row md:gap-10 lg:gap-14">
-        <div className="flex flex-shrink-0 gap-2 overflow-x-auto pb-1 md:gap-3 md:pb-0">
+        {/* Bloque decorativo de fotos: solo en md+, oculto en móvil para no desbordar */}
+        <div className="hidden flex-shrink-0 gap-2 md:flex md:gap-3 md:pb-0" aria-hidden="true">
           <div className="flex flex-col gap-2 md:gap-3">
             {col1.map((member) => (
               <PhotoCard key={member.id} member={member} className={resolved.photoCol1} resolved={resolved} onOpen={open} />
@@ -80,7 +81,7 @@ export default function TeamShowcase({ members = [], publicUi }: TeamShowcasePro
           </div>
         </div>
 
-        <div className="flex w-full flex-1 flex-col gap-4 pt-0 sm:grid sm:grid-cols-2 md:flex md:flex-col md:gap-5 md:pt-2">
+        <div className="flex w-full min-w-0 flex-1 flex-col gap-4 pt-0 sm:grid sm:grid-cols-2 md:flex md:flex-col md:gap-5 md:pt-2">
           {members.map((member) => (
             <MemberRow key={member.id} member={member} onOpen={open} />
           ))}
