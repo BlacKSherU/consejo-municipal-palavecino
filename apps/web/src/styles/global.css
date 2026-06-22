@@ -58,5 +58,18 @@
   body {
     min-height: 100vh;
     min-height: 100dvh;
+    /* Red de seguridad: ningún hijo debe generar scroll horizontal a nivel de página.
+       overflow-x: clip respeta position:sticky de hijos (a diferencia de overflow:hidden). */
+    overflow-x: clip;
+  }
+
+  /* Cortar palabras larguísimas (URLs, slugs) que rompen el layout en móvil. */
+  p, h1, h2, h3, h4, h5, h6, li {
+    overflow-wrap: break-word;
+  }
+
+  /* Imágenes y multimedia nunca deben exceder horizontalmente su contenedor. */
+  img, video, iframe, picture, canvas {
+    max-width: 100%;
   }
 }
