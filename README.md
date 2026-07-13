@@ -1,4 +1,4 @@
-# Consejo Municipal Bolivariano de Palavecino
+# Concejo Municipal Bolivariano de Palavecino
 
 Portal institucional en **Astro** (Cloudflare Pages) y **API REST** en **Cloudflare Workers** (Hono), con **D1** (SQLite), **R2** (PDF e imágenes) e integración con **Instagram Graph API** (Meta).
 

@@ -76,7 +76,7 @@ export async function initNewsDetail(rootId = "article-root"): Promise<void> {
       published_at?: string | null;
     };
 
-    document.title = `${n.title ?? "Noticia"} — Consejo Municipal de Palavecino`;
+    document.title = `${n.title ?? "Noticia"} — Concejo Municipal de Palavecino`;
 
     const { src: heroSrc, g } = heroForSlug(slug);
 

@@ -45,3 +45,33 @@ apps/web/.astro/
 .eggs/
 build/
 *.egg
+
+# Documentos personales / entrega UNEFA (no van al repo público)
+universidad/
+Anexo-*.docx
+Informe-*.docx
+Presentacion-*.pptx
+CONTROL DE*.xlsx
+PLAN DE ACTIVIDADES*.xlsx
+WhatsApp Image*
+MODELO DE LA PRESENTACIÓN*
+ESTRUCTURA DEL INFORME*
+INSTRUCTIVO*.pdf
+CONSTANCIA CULMINACION*
+EVALUACION *
+Etiqueta*.docx
+ETIQUETA*.docx
+
+# Scripts personales de generación UNEFA (no van al repo del sistema)
+scripts/generar-informe*.py
+scripts/generar-anexo*.py
+scripts/generar-anexos.py
+scripts/generar-presentacion.py
+scripts/rellenar-formatos-unefa.py
+scripts/rellenar-pasantias.py
+scripts/subir-fotos-consejales.py
+scripts/subir-noticias-demo.py
+scripts/capturas-sistema.mjs
+
+# Node lockfile del root (se creó por accidente al probar playwright)
+/package-lock.json

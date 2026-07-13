@@ -33,7 +33,7 @@ export async function initAboutPage(rootId = "about-page-root"): Promise<void> {
     kicker.className =
       "text-xs font-semibold uppercase tracking-[0.25em] text-brand dark:text-brand-muted";
     kicker.textContent =
-      (data.kicker && data.kicker.trim()) || "Consejo Municipal de Palavecino";
+      (data.kicker && data.kicker.trim()) || "Concejo Municipal de Palavecino";
     head.appendChild(kicker);
     const h1 = document.createElement("h1");
     h1.className =
@@ -44,7 +44,7 @@ export async function initAboutPage(rootId = "about-page-root"): Promise<void> {
     sub.className = "mx-auto mt-4 max-w-2xl text-lg text-slate-600 dark:text-slate-400";
     sub.textContent =
       (data.hero && data.hero.trim()) ||
-      "Identidad institucional, propósito y horizonte del Consejo Municipal Bolivariano de Palavecino.";
+      "Identidad institucional, propósito y horizonte del Concejo Municipal Bolivariano de Palavecino.";
     head.appendChild(sub);
 
     const bars = document.createElement("div");

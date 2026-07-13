@@ -42,13 +42,13 @@ export interface NewsCardsProps {
 
 const defaultStatusBars: StatusBar[] = [
   { id: "1", category: "CMP Palavecino", subcategory: "Comunicación", length: 3, opacity: 1 },
-  { id: "2", category: "Consejo Municipal", subcategory: "Transparencia", length: 2, opacity: 0.7 },
+  { id: "2", category: "Concejo Municipal", subcategory: "Transparencia", length: 2, opacity: 0.7 },
   { id: "3", category: "Palavecino", subcategory: "Lara", length: 1, opacity: 0.4 },
 ];
 
 export function NewsCards({
   title = "Noticias",
-  subtitle = "Comunicados del Consejo Municipal de Palavecino",
+  subtitle = "Comunicados del Concejo Municipal de Palavecino",
   statusBars = defaultStatusBars,
   newsCards = [],
   enableAnimations = true,

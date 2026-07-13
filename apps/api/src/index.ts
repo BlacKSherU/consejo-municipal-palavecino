@@ -53,7 +53,7 @@ app.get("/", (c) =>
   c.json({
     ok: true,
     service: "cmp-api",
-    project: "Consejo Municipal de Palavecino",
+    project: "Concejo Municipal de Palavecino",
     check: { health: "/health", publicApi: "GET /api/site/home", adminRequiresAuth: "GET /api/admin/*" },
   })
 );
@@ -272,10 +272,10 @@ async function loadAboutBundle(db: D1Database) {
     body: about?.body ?? "",
     mission: mission?.body ?? "",
     vision: vision?.body ?? "",
-    kicker: kicker?.body?.trim() ?? "Consejo Municipal de Palavecino",
+    kicker: kicker?.body?.trim() ?? "Concejo Municipal de Palavecino",
     hero:
       hero?.body?.trim() ??
-      "Identidad institucional, propósito y horizonte del Consejo Municipal Bolivariano de Palavecino.",
+      "Identidad institucional, propósito y horizonte del Concejo Municipal Bolivariano de Palavecino.",
     images: parseAboutImages(imgs?.body),
     updated_at: about?.updated_at ?? null,
   };
@@ -299,7 +299,7 @@ type HomePageContent = {
 
 const DEFAULT_HOME_PAGE: HomePageContent = {
   hero_badge: "Portal institucional",
-  hero_title_1: "Consejo Municipal Bolivariano",
+  hero_title_1: "Concejo Municipal Bolivariano",
   hero_title_2: "de Palavecino",
   hero_lead:
     "Servimos con transparencia, participación y compromiso con el desarrollo local. Conozca nuestro trabajo y conéctese con el consejo.",

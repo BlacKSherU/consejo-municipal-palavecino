@@ -126,7 +126,7 @@ export function AdminQuienesSomosIsland() {
                     <FormLabel>Línea pequeña (kicker)</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="p. ej. Consejo Municipal de Palavecino"
+                        placeholder="p. ej. Concejo Municipal de Palavecino"
                         className="max-w-xl"
                         {...field}
                       />

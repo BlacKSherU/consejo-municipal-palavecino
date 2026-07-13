@@ -52,7 +52,7 @@ const aboutBody = [
   "## Concejo Municipal Bolivariano de Palavecino",
   "",
   "## Información General",
-  "El **Consejo Municipal de Palavecino** es el órgano deliberante y depositario de la potestad legislativa local del municipio Palavecino, estado Lara. Su sede principal se encuentra en el Edificio de los Poderes Públicos, ubicado en la calle Juan de Dios Ponte, frente a la Plaza Aquilino Juárez (o Plaza La Cruz), en el centro neurálgico de Cabudare.",
+  "El **Concejo Municipal de Palavecino** es el órgano deliberante y depositario de la potestad legislativa local del municipio Palavecino, estado Lara. Su sede principal se encuentra en el Edificio de los Poderes Públicos, ubicado en la calle Juan de Dios Ponte, frente a la Plaza Aquilino Juárez (o Plaza La Cruz), en el centro neurálgico de Cabudare.",
   "",
   "* **Lema Institucional:** \"¡Legislando con Honestidad, Eficiencia y Buen Servicio!\"",
   "",

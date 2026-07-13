@@ -2,6 +2,7 @@ import { apiUrl } from "../lib/api";
 
 export function initInstagramFeed(): void {
   void (async () => {
+    const section = document.getElementById("home-instagram");
     const root = document.getElementById("ig-feed");
     const status = document.getElementById("ig-status");
     if (!root) return;
@@ -13,18 +14,15 @@ export function initInstagramFeed(): void {
         fetched_at?: string | null;
       };
       const items = data.items || [];
+      const list = Array.isArray(items) ? items : [];
+      // Si no hay publicaciones reales, dejar la sección oculta (hidden por defecto)
+      if (list.length === 0) return;
+
+      // Hay publicaciones: mostrar la sección
+      if (section) section.hidden = false;
       if (data.error && status) status.textContent = "Aviso: " + data.error;
       else if (status) status.textContent = data.fetched_at ? "Actualizado: " + data.fetched_at : "";
       root.textContent = "";
-      const list = Array.isArray(items) ? items : [];
-      if (list.length === 0) {
-        const p = document.createElement("p");
-        p.className = "text-slate-500";
-        p.textContent =
-          "No hay publicaciones en caché. Configure Meta en el Worker y use «Actualizar» en el panel admin.";
-        root.appendChild(p);
-        return;
-      }
       for (const raw of list.slice(0, 6)) {
         const it = raw as {
           permalink?: string;

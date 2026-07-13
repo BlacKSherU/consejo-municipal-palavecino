@@ -1,4 +1,4 @@
-# Lineamientos — Consejo Municipal Palavecino (Cloudflare)
+# Lineamientos — Concejo Municipal Palavecino (Cloudflare)
 
 Stack actual: **Astro** (frontend), **Hono** en **Workers**, **D1**, **R2**. Sin Django.
 
