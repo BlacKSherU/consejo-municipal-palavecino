@@ -243,11 +243,34 @@ export function AdminConsejoIsland() {
       setPhotoErr((e) => ({ ...e, [memberId]: r.error.issues[0]?.message ?? "Imagen no válida" }));
       return;
     }
-    setPhotoErr((e) => ({ ...e, [memberId]: undefined }));
+    setPhotoErr((e) => ({ ...e, [memberId]: "Subiendo imagen…" }));
     const fd = new FormData();
     fd.set("file", file);
-    await apiFetch("/api/admin/council/members/" + memberId + "/photo", { method: "POST", body: fd });
-    void load();
+    try {
+      const res = await apiFetch(
+        "/api/admin/council/members/" + memberId + "/photo",
+        { method: "POST", body: fd },
+      );
+      if (!res.ok) {
+        let msg = `Error ${res.status}`;
+        try {
+          const j = (await res.json()) as { error?: string };
+          if (j?.error) msg = j.error;
+        } catch {
+          try {
+            const t = await res.text();
+            if (t) msg = t.slice(0, 200);
+          } catch {}
+        }
+        setPhotoErr((e) => ({ ...e, [memberId]: `No se pudo subir la foto: ${msg}` }));
+        return;
+      }
+      setPhotoErr((e) => ({ ...e, [memberId]: undefined }));
+      void load();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setPhotoErr((e) => ({ ...e, [memberId]: `No se pudo subir la foto: ${msg}` }));
+    }
   }
 
   return (
