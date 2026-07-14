@@ -73,6 +73,14 @@ export function AdminConsejoIsland() {
   const [grouped, setGrouped] = useState<PositionWithMembers[]>([]);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [photoErr, setPhotoErr] = useState<Record<number, string | undefined>>({});
+  // La foto recién elegida, por consejal. AdminFileImageField ya sabe previsualizar un File
+  // (crea un objectURL); antes se le pasaba value={null} fijo, así que esa ruta nunca se
+  // usaba y la vista previa se quedaba en la URL del servidor.
+  const [photoFile, setPhotoFile] = useState<Record<number, File | undefined>>({});
+  // Rompe la caché del navegador. La URL de la foto (/api/council/photo/{id}) es SIEMPRE la
+  // misma, así que tras subir una nueva el navegador seguía sirviendo la vieja desde caché:
+  // el usuario subía una foto y veía la anterior.
+  const [photoVer, setPhotoVer] = useState<Record<number, number>>({});
   const [editingPosId, setEditingPosId] = useState<number | null>(null);
   const [editingMemId, setEditingMemId] = useState<number | null>(null);
   const { confirm, ConfirmDialog } = useConfirm();
@@ -237,12 +245,20 @@ export function AdminConsejoIsland() {
   }
 
   async function onPhotoChange(memberId: number, file: File | null) {
-    if (!file) return;
+    if (!file) {
+      setPhotoFile((p) => ({ ...p, [memberId]: undefined }));
+      return;
+    }
     const r = imageFileSchema.safeParse(file);
     if (!r.success) {
+      setPhotoFile((p) => ({ ...p, [memberId]: undefined }));
       setPhotoErr((e) => ({ ...e, [memberId]: r.error.issues[0]?.message ?? "Imagen no válida" }));
       return;
     }
+    // Muestre la foto elegida YA, sin esperar a que termine la subida. El usuario elige una
+    // imagen y quiere verla: mientras la vista previa siguiera mostrando la anterior, parecía
+    // que no se había aplicado nada.
+    setPhotoFile((p) => ({ ...p, [memberId]: file }));
     setPhotoErr((e) => ({ ...e, [memberId]: "Subiendo imagen…" }));
     const fd = new FormData();
     fd.set("file", file);
@@ -262,13 +278,23 @@ export function AdminConsejoIsland() {
             if (t) msg = t.slice(0, 200);
           } catch {}
         }
+        // La subida falló: retire la vista previa local para no dejar en pantalla una foto
+        // que el servidor no tiene. Enseñar la nueva junto a un error es prometer algo que
+        // no ocurrió.
+        setPhotoFile((p) => ({ ...p, [memberId]: undefined }));
         setPhotoErr((e) => ({ ...e, [memberId]: `No se pudo subir la foto: ${msg}` }));
         return;
       }
       setPhotoErr((e) => ({ ...e, [memberId]: undefined }));
-      void load();
+      await load();
+      // Ahora la URL del servidor lleva una versión nueva, así que ya sirve la foto recién
+      // subida y no la cacheada. Solo entonces se suelta la vista previa local: soltarla
+      // antes haría parpadear la foto vieja durante un instante.
+      setPhotoVer((v) => ({ ...v, [memberId]: (v[memberId] ?? 0) + 1 }));
+      setPhotoFile((p) => ({ ...p, [memberId]: undefined }));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      setPhotoFile((p) => ({ ...p, [memberId]: undefined }));
       setPhotoErr((e) => ({ ...e, [memberId]: `No se pudo subir la foto: ${msg}` }));
     }
   }
@@ -567,7 +593,12 @@ export function AdminConsejoIsland() {
         <div className="space-y-6">
           {grouped.flatMap((g) =>
             (g.members || []).map((m) => {
-              const preview = m.photo_key ? apiUrl("/api/council/photo/" + m.id) : null;
+              // ?v= sube en cada subida. Sin él la URL es idéntica antes y después, y el
+              // navegador responde con la imagen que ya tenía en caché: la anterior.
+              const ver = photoVer[m.id];
+              const preview = m.photo_key
+                ? apiUrl("/api/council/photo/" + m.id) + (ver ? `?v=${ver}` : "")
+                : null;
               const isEditing = editingMemId === m.id;
               return (
                 <Card key={m.id}>
@@ -671,7 +702,7 @@ export function AdminConsejoIsland() {
                           <div className="w-full max-w-sm sm:max-w-xs">
                             <AdminFileImageField
                               label="Foto de perfil"
-                              value={null}
+                              value={photoFile[m.id] ?? null}
                               onChange={(f) => void onPhotoChange(m.id, f)}
                               error={photoErr[m.id]}
                               existingPreviewUrl={preview}
@@ -729,7 +760,7 @@ export function AdminConsejoIsland() {
                           <div className="w-full shrink-0 sm:max-w-xs">
                             <AdminFileImageField
                               label="Foto de perfil"
-                              value={null}
+                              value={photoFile[m.id] ?? null}
                               onChange={(f) => void onPhotoChange(m.id, f)}
                               error={photoErr[m.id]}
                               existingPreviewUrl={preview}
