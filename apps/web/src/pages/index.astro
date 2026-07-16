@@ -36,15 +36,6 @@ import "../styles/index-home.css";
     </div>
   </section>
 
-  <section id="home-instagram" class="home-instagram" hidden>
-    <div class="home-instagram-inner">
-      <h2 id="home-ig-h2" class="home-instagram-h2">Instagram</h2>
-      <p id="home-ig-lead" class="home-instagram-lead">Publicaciones recientes (sincronizadas desde la cuenta oficial).</p>
-      <div id="ig-feed" class="home-ig-grid"></div>
-      <p id="ig-status" class="home-ig-status"></p>
-    </div>
-  </section>
-
   <section id="mission" class="home-mission">
     <div class="home-mission-inner">
       <div class="home-mission-copy">
@@ -60,7 +51,5 @@ import "../styles/index-home.css";
 
 <script>
   import { initHomePage } from "../scripts/load-home-page";
-  import { initInstagramFeed } from "../scripts/load-instagram-feed";
   void initHomePage();
-  initInstagramFeed();
 </script>
